@@ -5,6 +5,10 @@ Certainly! Here's a comprehensive README for the provided script:
 
 The Progressive Pomodoro Timer is a Python script that implements a customized version of the Pomodoro Technique. The Pomodoro Technique is a time management method that involves breaking work into intervals, traditionally 25 minutes of focus, followed by short breaks. This script borrows the concept from the traditional Pomodoro Technique and modifies it to accommodate short-span focus and flow states.
 
+***For better grasp of the idea***
+
+![00:00](https://www.youtube.com/watch?v=qtoysJSQTn8&t)
+
 ## Features
 
 - **Flexible Timer Duration**: The script allows you to set the initial duration for the focus timer in hours and minutes.
