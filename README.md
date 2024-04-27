@@ -7,7 +7,7 @@ The Progressive Pomodoro Timer is a Python script that implements a customized v
 
 ***For better grasp of the idea***
 
-![00:00](https://www.youtube.com/watch?v=qtoysJSQTn8&t)
+[00:00](https://www.youtube.com/watch?v=qtoysJSQTn8&t)
 
 ## Features
 
@@ -27,17 +27,22 @@ To run the script, you need to have Python 4 installed on your system, along wit
 2. Run the script with the desired arguments:
 
 ```sh
-python pomodoro_timer.py <hour> <minutes> <message>
+promo <hour> <minutes> <message>
 ```
 
 - Replace `<hour>` with the desired number of hours for the initial focus timer.
 - Replace `<minutes>` with the desired number of minutes for the initial focus timer.
 - Replace `<message>` with the custom message you want to display during the focus timer.
+or go with 06:37:02 defaults
+```sh
+promo
+```
+The above command sets timer to start at 5 minutes and the default message as **"Let's get things done"**
 
 For example, to run the script with a 25-minute focus timer and the message "Let's Get Started!", use:
 
 ```sh
-python pomodoro_timer.py 0 25 "Let's Get Started!"
+promo 0 25 "Let's Get Started!"
 ```
 
 3. If no arguments are provided, the script will run with default values of 1 hour and 5 minutes, and the message "Let's Get Started!!!".
