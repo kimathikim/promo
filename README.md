@@ -1,5 +1,3 @@
-Certainly! Here's a comprehensive README for the provided script:
-
 # Progressive Pomodoro Timer
 ![PROmo IMage](promo.png)
 
@@ -89,7 +87,7 @@ Make sure you have the `mytimer` utility installed on your system. If not, you m
 
 > [!CAUTION]
 > This script is only tested in ubuntu 22.04 LTS
-
+===
 ## Contributing
 
 Contributions to improve the Progressive Pomodoro Timer script are welcome! If you find any issues or have suggestions for enhancements, please create a new issue or submit a pull request on the repository.
