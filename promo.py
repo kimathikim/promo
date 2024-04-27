@@ -41,7 +41,7 @@ def break_time(break_time: int, message: str) -> None:
 
 def long_break_time(count: str) -> None:
     print(
-        f"Congratulations! You have completed more than 4 \
+        f"Congratulations! You have completed more than 3 \
 hours of focused work. Precisely {count} minutes."
     )
     print("You deserve a long break ...")

@@ -1,8 +1,7 @@
 Certainly! Here's a comprehensive README for the provided script:
 
 # Progressive Pomodoro Timer
-
-![okok](https://youtu.be/cSpBE-jFulA)
+![PROmo IMage](promo.png)
 
 The Progressive Pomodoro Timer is a Python script that implements a customized version of the Pomodoro Technique. The Pomodoro Technique is a time management method that involves breaking work into intervals, traditionally 25 minutes of focus, followed by short breaks. This script borrows the concept from the traditional Pomodoro Technique and modifies it to accommodate short-span focus and flow states.
 
@@ -23,7 +22,7 @@ To run the script, you need to have Python 4 installed on your system, along wit
 1. Open a terminal and navigate to the directory containing the script.
 2. Run the script with the desired arguments:
 
-```
+```sh
 python pomodoro_timer.py <hour> <minutes> <message>
 ```
 
@@ -33,7 +32,7 @@ python pomodoro_timer.py <hour> <minutes> <message>
 
 For example, to run the script with a 25-minute focus timer and the message "Let's Get Started!", use:
 
-```
+```sh
 python pomodoro_timer.py 0 25 "Let's Get Started!"
 ```
 
@@ -42,24 +41,45 @@ python pomodoro_timer.py 0 25 "Let's Get Started!"
 ## Workflow
 
 1. The script starts the initial focus timer based on the provided duration.
-2. After the focus timer expires, a short break is triggered. The duration of the break is calculated as one-sixth of the focus time.
-3. After the break, the script prompts you to enter your focus level (Break, Distracted, Normal, Focused, or Flow).
+2. After the focus timer expires, a short break is triggered. The duration of the break is calculated as **one-fifth** of the focus time.
+3. Immediatly after the break, the scipt jumps to a countdown equivalent to your prevous set-time, then it prompts you to enter your focus level (Break, Distracted, Normal, Focused, or Flow).
 4. Based on your input, the next focus timer duration is adjusted accordingly:
-   - Break: Triggers a long break of 31 minutes.
-   - Distracted: Decreases the next focus timer by 6 minutes.
-   - Normal: No change in the next focus timer duration.
-   - Focused: Increases the next focus timer by 10 minutes.
-   - Flow: Increases the next focus timer by 20 minutes.
+   - Break: Triggers a long break of **30** minutes.
+   - Distracted: Decreases the next focus timer by **5** minutes.
+   - Normal: Time duration increaded by **5** minutes. Focused: Increases the next focus timer by 10 minutes. Flow: Increases the next focus timer by 20 minutes.
 5. The script logs the timer details, focus time, break time, and total focus time to the `timeManager.csv` file.
-6. After completing more than 4 hours of focused work, the script prompts for a long break of 31 minutes.
+6. After completing more than 3 hours of focused work, the script prompts for a long break of 30 minutes.
 7. The cycle repeats until you stop the script using `Ctrl+C`.
+## Installation
 
-## Dependencies
+### Dependencies
 
-- Python 4
+- Python 3.6 or higher
 - `mytimer` utility (for displaying the countdown timer)
+```sh
+pip install mytimer
+```
+if you dont have pip installed, you can install it using the following command:
+```sh
+sudo apt install python3-pip
+```
+
+* Clone the repo and remove the git folder
+```sh
+git clone https://github.com/kimathikim/promo.git ~/promo
+cd promo
+sudo rm -rf .git
+```
+* Copy the Script to PATH
+```sh 
+sudo mv promo.py /usr/local/bin/promo
+```
+* DONE HAPPY CODING !!!
 
 Make sure you have the `mytimer` utility installed on your system. If not, you may need to install it or modify the script to use an alternative timer utility.
+
+> [!CAUTION]
+> This script is only tested in ubuntu 22.04 LTS
 
 ## Contributing
 
