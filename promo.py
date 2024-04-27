@@ -26,7 +26,7 @@ def break_time(break_time: int, message: str) -> None:
         subprocess.run(
             [
                 "mytimer",
-                f"--second={timer}",
+                f"--minute={timer}",
                 f"--message={message}",
                 "--countdown",
                 "--alarm=2",
@@ -83,7 +83,7 @@ def pomodoro(
                 subprocess.run(
                     [
                         "mytimer",
-                        f"--second={timer}",
+                        f"--minute={timer}",
                         f"--message={message}",
                         "--countdown",
                         "--alarm=4",
@@ -115,7 +115,7 @@ BREAK = 0, Distracted= 1, Normal = 2, Focused = 3, Flow = 4:\n"
                 elif focus == "0":
                     break_time(30, "Taking a Long break!😶️!.")
                     total_break_time += 30
-                    continue
+
                 else:
                     print("Invalid input. Prove that you are not focused!!")
                     focus_time += timer
