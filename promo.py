@@ -30,6 +30,7 @@ def break_time(break_time: int, message: str) -> None:
                 f"--message={message}",
                 "--countdown",
                 "--alarm=2",
+                "--alarm-repeat=3",
             ]
         )
         subprocess.run(["clear"])
@@ -56,9 +57,17 @@ def pomodoro(
     total_focus_time = 0
     total_break_time = 0
     focus_time = 0
-    home_dir = os.path.expanduser("~")
-    new_dir = f"{home_dir}"
-    new_file = f"{new_dir}/timeManager.csv"
+    try:
+        home_dir = os.path.expanduser("~")
+        new_dir = f"{home_dir}"
+        new_file = f"{new_dir}/timeManager.csv"
+        content = "Time, Date, Message, Break Time, \
+Focus Time, Total Focus Time"
+        with open(new_file, "a") as file:
+            csv.writer(file).writerow(content.split(","))
+    except FileNotFoundError:
+        print("File not found.")
+        return 0
 
     print("PROmodoro Timer")
     if initial_timer >= 200:
@@ -87,6 +96,7 @@ def pomodoro(
                         f"--message={message}",
                         "--countdown",
                         "--alarm=4",
+                        "--alarm-repeat=3",
                         "--tone=5",
                     ]
                 )
