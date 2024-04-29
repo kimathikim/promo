@@ -10,7 +10,30 @@ import os
 
 
 def write_to_csv(filename, data):
-    with open(filename, "a", newline="") as file:
+    """This function writes data to a csv file."""
+    try:
+        if filename:
+            home_dir = os.path.expanduser("~")
+            new_file = os.path.join(home_dir, filename)
+            sleeper(2)
+        if not os.path.exists(new_file):
+            with open(new_file, "a", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow(
+                    [
+                        "Time",
+                        "Date",
+                        "Message",
+                        "Break Time",
+                        "Total Break Time",
+                        "Focus Time",
+                        "Total Focus Time",
+                    ]
+                )
+    except Exception as e:
+        print(f"File not found. {e}")
+
+    with open(new_file, "a", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(data)
 
@@ -21,12 +44,13 @@ def break_time(break_time: int, message: str) -> None:
     total_break_time = 0
     print("Break Timer")
     print("Press Ctrl-C to stop the timer.")
+    sleeper(4)
     try:
         total_break_time += int(timer)
         subprocess.run(
             [
                 "mytimer",
-                f"--minute={timer}",
+                f"--second={timer}",
                 f"--message={message}",
                 "--countdown",
                 "--alarm=2",
@@ -41,11 +65,20 @@ def break_time(break_time: int, message: str) -> None:
 
 def long_break_time(count: str) -> None:
     print(
-        f"Congratulations! You have completed more than 3 \
+        f"Congratulations! You have completed more than 4 \
 hours of focused work. Precisely {count} minutes."
     )
     print("You deserve a long break ...")
+    sleeper(5)
     break_time(30, "Enjoy your break!😶️!.")
+
+
+def sleeper(sec):
+    """This function implements a sleeper timer."""
+    try:
+        time.sleep(sec)
+    except KeyboardInterrupt:
+        print("\nPomodoro timer stopped.")
 
 
 def pomodoro(
@@ -56,43 +89,40 @@ def pomodoro(
     initial_timer = timer
     total_focus_time = 0
     total_break_time = 0
-    focus_time = 0
-    try:
-        home_dir = os.path.expanduser("~")
-        new_dir = f"{home_dir}"
-        new_file = f"{new_dir}/timeManager.csv"
-        content = "Time, Date, Message, Break Time, \
-Focus Time, Total Focus Time"
-        with open(new_file, "a") as file:
-            csv.writer(file).writerow(content.split(","))
-    except FileNotFoundError:
-        print("File not found.")
-        return 0
-
+    break_t = 0
     print("PROmodoro Timer")
-    if initial_timer >= 200:
-        print("You are a machine!!!😎️")
-
-    print("\nPress Ctrl-C to stop the timer.")
-    try:
-        time.sleep(4)
-        count = timer
-    except KeyboardInterrupt:
-        print("\nPomodoro timer stopped.")
-
-        return 0
+    if initial_timer >= 180:
+        print("You are a machine!!!😎. Keep it up!.")
+        print("\nPress Ctrl-C to stop the timer.")
+    sleeper(1)
     try:
         while True:
+            total_focus_time += timer
+            count = total_focus_time
+
             if timer <= 0:
                 break
                 print(count)
                 return count
 
+            write_to_csv(
+                "timeManager.csv",
+                [
+                    datetime.today().strftime(" %H:%M:%S"),
+                    datetime.today().strftime("%Y-%m-%d"),
+                    message,
+                    break_t,
+                    total_break_time,
+                    timer,
+                    total_focus_time,
+                    count,
+                ],
+            )
             try:
                 subprocess.run(
                     [
                         "mytimer",
-                        f"--minute={timer}",
+                        f"--second={timer}",
                         f"--message={message}",
                         "--countdown",
                         "--alarm=4",
@@ -101,26 +131,27 @@ Focus Time, Total Focus Time"
                     ]
                 )
                 subprocess.run(["clear"])
-                focus_time += timer
-                if timer >= 25:
-                    break_t = timer // 5
-                    break_time(break_t, "Take a break.")
-                    total_break_time += break_t
-                    focus_time = 0
-
-                total_focus_time += timer
-                print(f"Last timer: {timer} \
-minutes.\nFocus time: {total_focus_time} \
+                print(f"Focus time: {total_focus_time} \
 minutes.\nTotal focus time: {count} \
 minutes.\nTotal break time: {total_break_time} \
 minutes.\n")
+
+                if timer >= 30:
+                    break_t = timer // 5
+                    if break_t >= 36:
+                        long_break_time(count)
+                        return count
+                    break_time(break_t, "Take a break.")
+                    total_break_time += break_t
+                if count >= 180:
+                    long_break_time(count)
+                    return count
 
                 focus = input(
                     "Enter your focus level:\n\
 BREAK = 0, Distracted= 1, Normal = 2, Focused = 3, Flow = 4:\n"
                 )
                 if focus in ["1", "2", "3", "4"]:
-                    focus_time += timer
                     timer += [-5, 5, 10, 20][int(focus) - 1]
                 elif focus == "0":
                     break_time(30, "Taking a Long break!😶️!.")
@@ -128,28 +159,8 @@ BREAK = 0, Distracted= 1, Normal = 2, Focused = 3, Flow = 4:\n"
 
                 else:
                     print("Invalid input. Prove that you are not focused!!")
-                    focus_time += timer
                 print(f"Next timer is set to {timer} minutes.")
-                time.sleep(3)
-
-                count += timer
-
-                write_to_csv(
-                    new_file,
-                    [
-                        datetime.today().strftime(" %H:%M:%S"),
-                        datetime.today().strftime("%Y-%m-%d"),
-                        message,
-                        total_break_time,
-                        focus_time,
-                        total_focus_time,
-                    ],
-                )
-                if count >= 180:
-                    long_break_time(count)
-                    total_break_time += 30
-                    count = 0
-                    time.sleep(3)
+                sleeper(3)
 
             except KeyboardInterrupt:
                 print("Pomodoro timer stopped.")
@@ -158,17 +169,16 @@ BREAK = 0, Distracted= 1, Normal = 2, Focused = 3, Flow = 4:\n"
     except KeyboardInterrupt:
         print("Pomodoro timer stopped.")
         print("Total focus time not calculated accurately.")
-        return 0
+        return count
     return count
 
 
 def main():
     if len(sys.argv) == 1:
         count = pomodoro()
-        print(f"Total time spent: {count} minutes.")
         return
 
-    if len(sys.argv) < 4 and len(sys.argv) > 1:
+    if len(sys.argv) != 4:
         print("Usage: python script.py <hour> <minutes> <message>")
         return
 
@@ -177,11 +187,10 @@ def main():
         minutes = int(sys.argv[2])
         message = sys.argv[3]
     except ValueError:
-        print("usage: python script.py <hour> <minutes> <message>")
-        print("Invalid input. Please enter a number.")
+        print("Usage: python script.py <hour> <minutes> <message>")
         return
-    if len(sys.argv) > 3:
-        count = pomodoro(hour, minutes, message)
+
+    count = pomodoro(hour, minutes, message)
 
     print(f"Total time spent: {count} minutes.")
 
