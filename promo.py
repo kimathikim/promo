@@ -115,7 +115,6 @@ def pomodoro(
                     total_break_time,
                     timer,
                     total_focus_time,
-                    count,
                 ],
             )
             try:
