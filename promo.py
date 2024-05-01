@@ -50,7 +50,7 @@ def break_time(break_time: int, message: str) -> None:
         subprocess.run(
             [
                 "mytimer",
-                f"--second={timer}",
+                f"--minute={ctimer}",
                 f"--message={message}",
                 "--countdown",
                 "--alarm=2",
@@ -121,7 +121,7 @@ def pomodoro(
                 subprocess.run(
                     [
                         "mytimer",
-                        f"--second={timer}",
+                        f"--minute={timer}",
                         f"--message={message}",
                         "--countdown",
                         "--alarm=4",
