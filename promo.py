@@ -188,8 +188,10 @@ class FlipClock:
                 rows[2 + g].append(f"  {_pixels(glyph_bottom[g])}  ",
                                    style=f"bold {bottom_fg} on {CARD_BOTTOM}")
             rows[8].append(" " * CARD_WIDTH, style=f"on {CARD_BOTTOM}")
+        # Center the clock as one block. Per-line centering strips trailing
+        # spaces, which shifts rows that end in blank card padding.
         out = Text("\n").join(rows)
-        out.justify = "center"
+        out.no_wrap = True
         return out
 
     @staticmethod
@@ -197,7 +199,7 @@ class FlipClock:
         rows = ["  ".join(_pixels(SMALL_FONT[c][r]) if c.isdigit()
                           else SMALL_FONT[c][r].replace("#", "█")
                           for c in value) for r in range(5)]
-        return Text("\n".join(rows), style=style, justify="center")
+        return Text("\n".join(rows), style=style, no_wrap=True)
 
 
 def fmt_clock(seconds: float) -> str:
@@ -585,7 +587,7 @@ class UI:
             info.append(f"ends {ends:%H:%M}   ·   {int(phase.fraction * 100)}%"
                         f"   ·   {fmt_minutes(phase.planned / 60)}")
         toast = self.app.current_toast()
-        parts = [self._header(phase), Text(""), clock, Text(""),
+        parts = [self._header(phase), Text(""), Align.center(clock), Text(""),
                  Align.center(bar), info]
         if self.app.show_details:
             parts += [Text(""), Align.center(self._details(phase))]
