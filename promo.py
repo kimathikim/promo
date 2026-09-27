@@ -16,6 +16,7 @@ import csv
 import json
 import math
 import os
+import random
 import re
 import select
 import shutil
@@ -55,6 +56,7 @@ DATA_DIR = _xdg("XDG_DATA_HOME", "~/.local/share")
 CACHE_DIR = _xdg("XDG_CACHE_HOME", "~/.cache")
 CONFIG_PATH = os.path.join(_xdg("XDG_CONFIG_HOME", "~/.config"), "config.ini")
 STATE_PATH = os.path.join(CACHE_DIR, "state.json")
+CONTROL_PATH = os.path.join(CACHE_DIR, "control")  # FIFO for remote commands
 
 LONG_BREAK_MINUTES = 30
 MIN_FOCUS_MINUTES = 5
@@ -188,8 +190,10 @@ class FlipClock:
                 rows[2 + g].append(f"  {_pixels(glyph_bottom[g])}  ",
                                    style=f"bold {bottom_fg} on {CARD_BOTTOM}")
             rows[8].append(" " * CARD_WIDTH, style=f"on {CARD_BOTTOM}")
+        # Center the clock as one block. Per-line centering strips trailing
+        # spaces, which shifts rows that end in blank card padding.
         out = Text("\n").join(rows)
-        out.justify = "center"
+        out.no_wrap = True
         return out
 
     @staticmethod
@@ -197,7 +201,7 @@ class FlipClock:
         rows = ["  ".join(_pixels(SMALL_FONT[c][r]) if c.isdigit()
                           else SMALL_FONT[c][r].replace("#", "█")
                           for c in value) for r in range(5)]
-        return Text("\n".join(rows), style=style, justify="center")
+        return Text("\n".join(rows), style=style, no_wrap=True)
 
 
 def fmt_clock(seconds: float) -> str:
@@ -226,6 +230,126 @@ def tilde(path: str) -> str:
 
 def clamp_focus(minutes: float) -> int:
     return int(max(MIN_FOCUS_MINUTES, min(MAX_FOCUS_MINUTES, minutes)))
+
+
+# --------------------------------------------------------------------------
+# Game: XP, levels, combos and achievements, all replayed from the session log
+# --------------------------------------------------------------------------
+XP_MULTIPLIER = {"Flow": 1.5, "Focused": 1.25, "Normal": 1.0, "Distracted": 0.5}
+COMBO_LEVELS = {"Focused", "Flow"}
+TITLES = ["Intern", "Junior Dev", "Mid-level Dev", "Senior Dev", "Staff Engineer",
+          "Principal Engineer", "Distinguished Engineer", "10x Engineer",
+          "Blazingly Fast"]
+XP_STEP = 150  # level n starts at XP_STEP * n^2
+
+ACHIEVEMENTS = [
+    ("first_blood", "First Blood", "finish your first focus session"),
+    ("deep_work", "Deep Work", "one session of 90+ minutes"),
+    ("in_the_zone", "In The Zone", "rate 5 sessions as Flow"),
+    ("combo", "C-C-C-Combo", "5 Focused/Flow sessions in a row"),
+    ("ship_it", "Ship It", "5+ commits in one session"),
+    ("marathon", "Marathon", "4 hours of focus in one day"),
+    ("on_fire", "On Fire", "focus 7 days in a row"),
+    ("night_owl", "Night Owl", "start a session between midnight and 4am"),
+    ("early_bird", "Early Bird", "start a session between 4am and 6am"),
+    ("centurion", "Centurion", "finish 100 focus sessions"),
+]
+
+
+def session_xp(minutes: float, level: str, combo: int) -> int:
+    """XP for one session: minutes x focus multiplier, +10% per combo step."""
+    return int(round(minutes * XP_MULTIPLIER.get(level, 0.75)
+                     * (1 + 0.1 * min(combo, 5))))
+
+
+def level_for(xp: int) -> Tuple[int, str, int, int]:
+    """(level, title, xp into this level, xp this level spans)."""
+    n = min(len(TITLES) - 1, int(math.sqrt(max(0, xp) / XP_STEP)))
+    lo, hi = XP_STEP * n * n, XP_STEP * (n + 1) ** 2
+    return n, TITLES[n], xp - lo, hi - lo
+
+
+@dataclass
+class Progress:
+    xp: int = 0
+    combo: int = 0
+    best_combo: int = 0
+    unlocked: set = field(default_factory=set)
+
+    @property
+    def level(self) -> Tuple[int, str, int, int]:
+        return level_for(self.xp)
+
+
+def replay(rows: List[dict]) -> Progress:
+    """Rebuild XP, combo and achievements from logged focus sessions."""
+    p = Progress()
+    flows = sessions = 0
+    by_day: Dict[str, float] = defaultdict(float)
+    for r in rows:
+        mins = _num(r.get("actual_min"))
+        if r.get("phase") != "focus" or mins < 1:
+            continue
+        level = r.get("focus_level") or ""
+        sessions += 1
+        p.combo = p.combo + 1 if level in COMBO_LEVELS else 0
+        p.best_combo = max(p.best_combo, p.combo)
+        p.xp += session_xp(mins, level, p.combo)
+        flows += level == "Flow"
+        by_day[r.get("date") or ""] += mins
+        try:
+            hour = int((r.get("start") or "12")[:2])
+        except ValueError:
+            hour = 12
+        checks = {
+            "first_blood": True,
+            "deep_work": mins >= 90,
+            "in_the_zone": flows >= 5,
+            "combo": p.combo >= 5,
+            "ship_it": _num(r.get("commits")) >= 5,
+            "marathon": by_day[r.get("date") or ""] >= 240,
+            "night_owl": hour < 4,
+            "early_bird": 4 <= hour < 6,
+            "centurion": sessions >= 100,
+        }
+        p.unlocked.update(k for k, ok in checks.items() if ok)
+    days = sorted(d for d in by_day if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d))
+    run = best = 0
+    prev = None
+    for d in map(date.fromisoformat, days):
+        run = run + 1 if prev and d - prev == timedelta(days=1) else 1
+        best, prev = max(best, run), d
+    if best >= 7:
+        p.unlocked.add("on_fire")
+    return p
+
+
+# Opt-in commentary (--spicy).
+SPICY_BREAKS = [
+    "go touch grass 🌱",
+    "hydrate or diedrate 💧",
+    "stand up. your spine has a skill issue",
+    "look at something 20 feet away. no, not the other monitor",
+    "stretch. you are not a shrimp 🦐",
+    "away from the keyboard. yes, even vim can wait",
+]
+
+
+def spicy_verdict(level: str, minutes: float, commits: int, has_repo: bool) -> str:
+    if level == "Flow":
+        return random.choice(["BLAZINGLY FAST 🚀", "flow state achieved. chat is speechless",
+                              "that was a 10x session"])
+    if level == "Distracted":
+        return random.choice(["chat, we got distracted", "the algorithm won this round",
+                              "the feed will still be there later. probably."])
+    if has_repo and minutes >= 25 and commits == 0:
+        return random.choice([f"{fmt_minutes(minutes)} and 0 commits… skill issue?",
+                              "no commits? bold strategy",
+                              "even `git commit -m wip` would count"])
+    if level == "Break":
+        return "rest is part of the work. seriously."
+    return random.choice(["solid. keep stacking.", "another one. 🔁",
+                          "consistency beats intensity"])
 
 
 # --------------------------------------------------------------------------
@@ -314,41 +438,74 @@ class Stats:
 # --------------------------------------------------------------------------
 # Terminal input
 # --------------------------------------------------------------------------
-class Keys:
-    """Non-blocking key reader (cbreak mode, so Ctrl-C still works)."""
+class Input:
+    """Keyboard (cbreak mode, so Ctrl-C still works) plus the control FIFO
+    that `promo toggle`, the Neovim plugin and tmux bindings write to."""
+
+    ARROWS = {"\x1b[D": "h", "\x1b[C": "l", "\x1bOD": "h", "\x1bOC": "l"}
 
     def __init__(self):
         self.fd = None
         self.saved = None
+        self.ctl = None
+        self._pending = b""
 
     def __enter__(self):
         if termios and sys.stdin.isatty():
             self.fd = sys.stdin.fileno()
             self.saved = termios.tcgetattr(self.fd)
             tty.setcbreak(self.fd)
+        try:
+            ensure_dir(CONTROL_PATH)
+            if os.path.exists(CONTROL_PATH):
+                os.remove(CONTROL_PATH)
+            os.mkfifo(CONTROL_PATH, 0o600)
+            # O_RDWR keeps a writer open ourselves, so the FIFO never hits EOF
+            self.ctl = os.open(CONTROL_PATH, os.O_RDWR | os.O_NONBLOCK)
+        except (OSError, AttributeError):  # no mkfifo on Windows
+            self.ctl = None
         return self
 
     def __exit__(self, *exc):
         if self.saved is not None:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self.saved)
+        if self.ctl is not None:
+            os.close(self.ctl)
+            try:
+                os.remove(CONTROL_PATH)
+            except OSError:
+                pass
 
     @property
     def interactive(self) -> bool:
         return self.fd is not None
 
-    def read(self, timeout: float) -> str:
-        """Return the typed characters ('' on timeout). A lone Esc is kept,
-        arrow keys and other escape sequences are dropped."""
-        if self.fd is None:
+    def read(self, timeout: float) -> Tuple[str, List[str]]:
+        """Wait up to `timeout` for input. Returns (typed characters, remote
+        command lines). A lone Esc is kept, left/right arrows become h/l and
+        other escape sequences are dropped."""
+        fds = [fd for fd in (self.fd, self.ctl) if fd is not None]
+        if not fds:
             time.sleep(timeout)
-            return ""
-        ready, _, _ = select.select([self.fd], [], [], max(0.0, timeout))
-        if not ready:
-            return ""
-        data = os.read(self.fd, 1024).decode(errors="ignore")
-        if data == "\x1b":
-            return data
-        return re.sub(r"\x1b(\[[0-9;?]*[ -/]*[@-~]|O.|.)?", "", data)
+            return "", []
+        ready, _, _ = select.select(fds, [], [], max(0.0, timeout))
+        keys, commands = "", []
+        if self.fd is not None and self.fd in ready:
+            data = os.read(self.fd, 1024).decode(errors="ignore")
+            if data == "\x1b":
+                keys = data
+            else:
+                for seq, key in self.ARROWS.items():
+                    data = data.replace(seq, key)
+                keys = re.sub(r"\x1b(\[[0-9;?]*[ -/]*[@-~]|O.|.)?", "", data)
+        if self.ctl is not None and self.ctl in ready:
+            try:
+                self._pending += os.read(self.ctl, 4096)
+            except BlockingIOError:
+                pass
+            *lines, self._pending = self._pending.split(b"\n")
+            commands = [ln.decode(errors="ignore").strip() for ln in lines if ln.strip()]
+        return keys, commands
 
 
 # --------------------------------------------------------------------------
@@ -502,6 +659,8 @@ class UI:
             if app.args.task:
                 top.append("   ")
                 top.append(app.args.task, style="bold")
+            if app.progress and app.progress.combo >= 2:
+                top.append(f"   🔥 x{app.progress.combo}", style="bold #fb923c")
         else:
             top.append(f"   next: {fmt_minutes(app.focus_min)} focus", style=MUTED)
         sub = Text(justify="center", style=MUTED)
@@ -511,7 +670,7 @@ class UI:
                 branch = branch[:31] + "…"
             sub.append(f"{app.repo.name}  ⎇ {branch}")
         elif phase.kind != "focus":
-            sub.append("step away from the screen · stretch · drink water")
+            sub.append(app.break_line)
         return Group(top, sub)
 
     def _details(self, phase: Phase) -> Table:
@@ -551,23 +710,32 @@ class UI:
             grid.add_row("git", git_row)
         if s.notes:
             grid.add_row("notes", f"{s.notes} captured (see summary)")
+        if app.progress:
+            _, title, into, span = app.progress.level
+            lvl = Table.grid(padding=(0, 1))
+            lvl.add_row(Text(title, style="bold #facc15"),
+                        ProgressBar(total=span, completed=min(into, span), width=14,
+                                    complete_style="#facc15", finished_style="#facc15"),
+                        Text(f"{app.progress.xp:,} XP", style=MUTED))
+            grid.add_row("level", lvl)
         return grid
 
     def _footer(self) -> Text:
         app = self.app
-        if app.note is not None:
+        if app.prompt is not None:
+            kind, text = app.prompt
             t = Text(justify="center")
-            t.append("✎ ", style="#facc15")
-            t.append(app.note)
+            t.append("✎ " if kind == "note" else ":", style="#facc15")
+            t.append(text)
             t.append("▏", style="blink")
             t.append("\n")
             t.append("enter", style="bold")
-            t.append(" save    ", style=MUTED)
+            t.append(" save    " if kind == "note" else " run    ", style=MUTED)
             t.append("esc", style="bold")
             t.append(" cancel", style=MUTED)
             return t
         return key_hints(("space", "pause"), ("s", "skip"), ("+/-", "1 min"),
-                         ("n", "note"), ("i", "details"), ("q", "quit"))
+                         ("n", "note"), ("i", "details"), (":", "cmd"), ("q", "quit"))
 
     def timer(self, phase: Phase, now: float) -> Align:
         _, color, _ = PHASES[phase.kind]
@@ -585,7 +753,7 @@ class UI:
             info.append(f"ends {ends:%H:%M}   ·   {int(phase.fraction * 100)}%"
                         f"   ·   {fmt_minutes(phase.planned / 60)}")
         toast = self.app.current_toast()
-        parts = [self._header(phase), Text(""), clock, Text(""),
+        parts = [self._header(phase), Text(""), Align.center(clock), Text(""),
                  Align.center(bar), info]
         if self.app.show_details:
             parts += [Text(""), Align.center(self._details(phase))]
@@ -616,13 +784,20 @@ class UI:
             nexts.append(Text("long break" if lvl.delta == 0 else
                               f"next {fmt_minutes(clamp_focus(app.focus_min + lvl.delta))}",
                               style=MUTED))
+        marks = [Text("━" * (len(lvl.name) + 2) if i == app.rating_sel else "",
+                      style=lvl.style) for i, lvl in enumerate(FOCUS_LEVELS)]
         grid.add_row(*names)
+        grid.add_row(*marks)
         grid.add_row(*nexts)
+        hint = Text("", justify="center")
+        if app.progress and app.progress.combo >= 1:
+            hint = Text(f"🔥 x{app.progress.combo} combo: rate Focused or Flow to keep it",
+                        style="#fb923c", justify="center")
         return self._screen(
             head, sub, Text(""),
             Text("How was your focus?", justify="center"), Text(""),
-            Align.center(grid), Text(""), Text(""),
-            key_hints(("1-5", "rate"), ("enter", "normal"), ("q", "quit")),
+            Align.center(grid), Text(""), hint, Text(""),
+            key_hints(("1-5", "rate"), ("h/l", "move"), ("enter", "pick"), ("q", "quit")),
         )
 
 
@@ -643,7 +818,11 @@ class App:
         self.focus_min = args.minutes
         self.current: Optional[Phase] = None
         self.show_details = False
-        self.note: Optional[str] = None
+        self.prompt: Optional[Tuple[str, str]] = None  # ("note" | "cmd", text)
+        self.rating_sel = 2
+        self.break_line = "step away from the screen · stretch · drink water"
+        self.progress: Optional[Progress] = replay(self.log.rows()) if args.game else None
+        self.xp_start = self.progress.xp if self.progress else 0
         self.toast: Tuple[str, float] = ("", 0.0)
         self._git_cache: Tuple[float, Tuple[int, int, int]] = (0.0, (0, 0, 0))
         self._title = ""
@@ -699,6 +878,7 @@ class App:
             "project": self.repo.name if self.repo else "",
             "branch": self.repo.branch if self.repo else "",
             "session": self.stats.sessions + (1 if phase.kind == "focus" else 0),
+            "combo": self.progress.combo if self.progress else 0,
         })
 
     def set_title(self, phase: Phase) -> None:
@@ -711,49 +891,93 @@ class App:
             sys.stdout.write(f"\x1b]2;{title}\x07")
             sys.stdout.flush()
 
-    # -- phases ----------------------------------------------------------
-    def handle_key(self, ch: str, phase: Phase) -> Optional[str]:
-        if self.note is not None:
-            if ch in ("\n", "\r"):
-                text = self.note.strip()
-                self.note = None
-                if text:
-                    if append_note(self.args.notes, text, self.args.task, self.repo):
-                        self.stats.notes += 1
-                        self.say("note saved, back to work")
-                    else:
-                        self.say("could not write note file")
-            elif ch == "\x1b":
-                self.note = None
-            elif ch in ("\x7f", "\b"):
-                self.note = self.note[:-1]
-            elif ch == "\x15":  # Ctrl-U
-                self.note = ""
-            elif ch.isprintable():
-                self.note += ch
-            return None
-        ch = ch.lower()
-        if ch in (" ", "p"):
-            phase.paused = not phase.paused
-            self.hook("pause" if phase.paused else "resume", phase)
-            self.publish(phase)
-        elif ch == "s":
-            return "skip"
-        elif ch in ("+", "="):
-            phase.planned += 60
-            self.publish(phase)
-        elif ch in ("-", "_"):
-            phase.planned = max(phase.elapsed + 1, phase.planned - 60)
-            self.publish(phase)
-        elif ch == "i":
-            self.show_details = not self.show_details
-        elif ch == "n":
-            self.note = ""
-        elif ch == "q":
+    # -- input -----------------------------------------------------------
+    def save_note(self, text: str) -> None:
+        if not text:
+            return
+        if append_note(self.args.notes, text, self.args.task, self.repo):
+            self.stats.notes += 1
+            self.say("note saved, back to work")
+        else:
+            self.say("could not write note file")
+
+    def run_command(self, line: str, phase: Phase) -> Optional[str]:
+        """Commands shared by the `:` prompt and remote control
+        (`promo toggle`, the Neovim plugin, tmux bindings)."""
+        name, _, arg = line.strip().lstrip(":").partition(" ")
+        name, arg = name.lower(), arg.strip()
+        if re.fullmatch(r"[+-]\d+", name):  # :+10  :-5
+            name, arg = name[0], name[1:]
+        if name in ("q", "q!", "quit", "stop", "wq", "x"):
             raise Quit
+        if name in ("toggle", "p", "pause", "resume"):
+            want = {"pause": True, "resume": False}.get(name, not phase.paused)
+            if want != phase.paused:
+                phase.paused = want
+                self.hook("pause" if want else "resume", phase)
+                self.publish(phase)
+        elif name in ("skip", "s", "next"):
+            return "skip"
+        elif name in ("add", "+", "sub", "-"):
+            try:
+                minutes = int(arg or 1)
+            except ValueError:
+                self.say(f"E474: Invalid argument: {arg}")
+                return None
+            sign = 1 if name in ("add", "+") else -1
+            phase.planned = max(phase.elapsed + 1, phase.planned + sign * minutes * 60)
+            self.publish(phase)
+            self.say(f"{'+' if sign > 0 else '−'}{minutes} min")
+        elif name in ("note", "n"):
+            if arg:
+                self.save_note(arg)
+            else:
+                self.prompt = ("note", "")
+        elif name == "task":
+            self.args.task = arg
+            self.publish(phase)
+            self.say(f"task: {arg}" if arg else "task cleared")
+        elif name in ("details", "i"):
+            self.show_details = not self.show_details
+        elif name in ("rate",) + tuple(lvl.key for lvl in FOCUS_LEVELS):
+            self.say("nothing to rate yet, keep going")
+        elif name:
+            self.say(f"E492: Not an editor command: {line.strip()}")
         return None
 
-    def run_phase(self, live: Live, keys: Keys, phase: Phase) -> bool:
+    def handle_key(self, ch: str, phase: Phase) -> Optional[str]:
+        if self.prompt is not None:
+            kind, text = self.prompt
+            if ch in ("\n", "\r"):
+                self.prompt = None
+                if kind == "note":
+                    self.save_note(text.strip())
+                elif text.strip():
+                    return self.run_command(text, phase)
+            elif ch == "\x1b":
+                self.prompt = None
+            elif ch in ("\x7f", "\b"):
+                # like vim, backspace on an empty command line closes it
+                self.prompt = None if kind == "cmd" and not text else (kind, text[:-1])
+            elif ch == "\x15":  # Ctrl-U
+                self.prompt = (kind, "")
+            elif ch.isprintable():
+                self.prompt = (kind, text + ch)
+            return None
+        if ch == ":":
+            self.prompt = ("cmd", "")
+            return None
+        keymap = {" ": "toggle", "p": "toggle", "s": "skip", "+": "+1", "=": "+1",
+                  "-": "-1", "_": "-1", "i": "details", "n": "note", "q": "quit"}
+        cmd = keymap.get(ch.lower())
+        if cmd in ("+1", "-1"):
+            phase.planned = max(phase.elapsed + 1, phase.planned + int(cmd) * 60)
+            self.publish(phase)
+            return None
+        return self.run_command(cmd, phase) if cmd else None
+
+    # -- phases ----------------------------------------------------------
+    def run_phase(self, live: Live, inp: Input, phase: Phase) -> bool:
         """Run a phase until it ends. Returns True if it ran to completion."""
         self.current = phase
         self._git_cache = (0.0, (0, 0, 0))
@@ -769,8 +993,12 @@ class App:
                 return True
             live.update(self.ui.timer(phase, now), refresh=True)
             self.set_title(phase)
-            for ch in keys.read(self.wait_time(phase, now)):
+            keys, commands = inp.read(self.wait_time(phase, now))
+            for ch in keys:
                 if self.handle_key(ch, phase) == "skip":
+                    return False
+            for line in commands:
+                if self.run_command(line, phase) == "skip":
                     return False
 
     def wait_time(self, phase: Phase, now: float) -> float:
@@ -788,20 +1016,38 @@ class App:
             wait = min(wait, until - now + 0.01)
         return min(wait, 1.0)
 
-    def ask_level(self, live: Live, keys: Keys, focused_min: float,
+    def ask_level(self, live: Live, inp: Input, focused_min: float,
                   activity: Tuple[int, int, int]) -> FocusLevel:
-        if not keys.interactive:
+        if not inp.interactive:
             return FOCUS_LEVELS[2]
+        self.rating_sel = 2
+        by_key = {lvl.key: lvl for lvl in FOCUS_LEVELS}
         while True:
             live.update(self.ui.rating(focused_min, activity), refresh=True)
-            for ch in keys.read(1.0):
+            keys, commands = inp.read(1.0)
+            for ch in keys:
                 if ch in ("\n", "\r"):
-                    return FOCUS_LEVELS[2]
-                if ch.lower() == "q":
+                    return FOCUS_LEVELS[self.rating_sel]
+                low = ch.lower()
+                if low == "q":
                     raise Quit
-                for lvl in FOCUS_LEVELS:
-                    if ch == lvl.key:
-                        return lvl
+                if low == "h":
+                    self.rating_sel = max(0, self.rating_sel - 1)
+                elif low == "l":
+                    self.rating_sel = min(len(FOCUS_LEVELS) - 1, self.rating_sel + 1)
+                elif ch in by_key:
+                    return by_key[ch]
+            for line in commands:
+                name, _, arg = line.lower().partition(" ")
+                if name in ("q", "quit", "stop", "wq"):
+                    raise Quit
+                key = arg.strip() if name == "rate" else name
+                if key in by_key:
+                    return by_key[key]
+                if name == "note" and arg.strip():
+                    append_note(self.args.notes, line.partition(" ")[2].strip(),
+                                self.args.task, self.repo)
+                    self.stats.notes += 1
 
     def finish(self, phase: Phase, level: str = "", commits: int = 0) -> None:
         minutes = phase.elapsed / 60
@@ -819,23 +1065,46 @@ class App:
         self.log.write(phase, self.args.task, self.repo, level, commits)
         self.current = None
 
-    def cycle(self, live: Live, keys: Keys) -> None:
+    def level_up_messages(self) -> List[str]:
+        """Refresh XP from the log and describe what changed."""
+        if not self.progress:
+            return []
+        before, after = self.progress, replay(self.log.rows())
+        self.progress = after
+        news = []
+        if after.xp > before.xp:
+            news.append(f"+{after.xp - before.xp} XP")
+        if after.combo >= 2:
+            news.append(f"🔥 x{after.combo} combo")
+        if after.level[0] > before.level[0]:
+            news.append(f"⬆ level up: {after.level[1]}")
+        names = {k: n for k, n, _ in ACHIEVEMENTS}
+        news += [f"🏆 {names[k]}" for k in sorted(after.unlocked - before.unlocked)]
+        return news
+
+    def cycle(self, live: Live, inp: Input) -> None:
         bell = self.args.bell
         if self.repo:
             self.repo.refresh_branch()
         focus = Phase("focus", self.focus_min * 60)
         self.hook("focus_start", focus)
-        self.run_phase(live, keys, focus)
+        self.run_phase(live, inp, focus)
         self.hook("focus_end", focus)
         focused_min = focus.elapsed / 60
         activity = self.repo.activity_since(focus.started_at) if self.repo else (0, 0, 0)
         notify("Focus session done", f"{fmt_minutes(focused_min)} focused", bell)
 
         # rate before logging so the level lands on the focus row
-        level = self.ask_level(live, keys, focused_min, activity)
+        level = self.ask_level(live, inp, focused_min, activity)
         self.finish(focus, level.name, activity[0])
         if level.delta:
             self.focus_min = clamp_focus(self.focus_min + level.delta)
+        news = self.level_up_messages()
+        if self.args.spicy:
+            news.append(spicy_verdict(level.name, focused_min, activity[0], bool(self.repo)))
+            self.break_line = random.choice(SPICY_BREAKS)
+        if news:
+            self.say("   ".join(news), 8)
 
         long_due = self.stats.since_long_break >= self.args.long_break_after
         if level.name == "Break" or long_due:
@@ -843,20 +1112,22 @@ class App:
             if long_due:
                 self.say(f"{fmt_minutes(self.stats.since_long_break)} of focus. "
                          "You earned a long break.", 8)
+                if self.args.spicy:
+                    self.break_line = "log off. touch actual grass. 🌳"
         else:
             brk = Phase("break", max(60, round(focus.elapsed / 5)))
         self.hook("break_start", brk)
-        self.run_phase(live, keys, brk)
+        self.run_phase(live, inp, brk)
         self.hook("break_end", brk)
         self.finish(brk)
         notify("Break over", f"Next: {fmt_minutes(self.focus_min)} of focus", bell)
 
     def run(self) -> None:
         try:
-            with Keys() as keys, Live(console=self.console, screen=True,
+            with Input() as inp, Live(console=self.console, screen=True,
                                       auto_refresh=False, transient=True) as live:
                 while True:
-                    self.cycle(live, keys)
+                    self.cycle(live, inp)
         except (Quit, KeyboardInterrupt):
             # keep whatever was done in the unfinished phase
             if self.current:
@@ -899,7 +1170,15 @@ class App:
         if self.repo:
             head.append("    commits ", style=MUTED)
             head.append(str(s.commits), style="bold #4ade80")
-        body = [head, Text("")]
+        body = [head]
+        if self.progress:
+            self.level_up_messages()
+            _, title, _, _ = self.progress.level
+            body.append(Text.assemble(
+                ("level   ", MUTED), (title, "bold #facc15"),
+                (f"   {self.progress.xp:,} XP", MUTED),
+                (f"   +{self.progress.xp - self.xp_start} this run", "#facc15")))
+        body.append(Text(""))
         body.append(table if s.history else Text("No sessions recorded.", style=MUTED))
         body += [Text(""), Text(f"log    {tilde(self.log.path)}", style=MUTED)]
         if s.notes:
@@ -1048,6 +1327,28 @@ def cmd_stats(args) -> None:
         proj.add_row(name[:24], Text("━" * max(1, int(mins / top * 24)), style="#a78bfa"),
                      fmt_minutes(mins))
 
+    game = Table.grid(padding=(0, 2))
+    game.add_column(style=MUTED, justify="right")
+    game.add_column()
+    prog = replay(log.rows())
+    n, title, into, span = prog.level
+    lvl = Table.grid(padding=(0, 1))
+    nxt = f"{span - into:,} XP to {TITLES[n + 1]}" if n + 1 < len(TITLES) else "max level"
+    lvl.add_row(Text(title, style="bold #facc15"),
+                ProgressBar(total=span, completed=min(into, span), width=20,
+                            complete_style="#facc15", finished_style="#facc15"),
+                Text(f"{prog.xp:,} XP · {nxt}", style=MUTED))
+    game.add_row("level", lvl)
+    game.add_row("combo", f"🔥 x{prog.combo} now   (best x{prog.best_combo})")
+    badges = Table.grid(padding=(0, 2))
+    badges.add_column(no_wrap=True)
+    badges.add_column(style=MUTED)
+    for key, name, desc in ACHIEVEMENTS:
+        got = key in prog.unlocked
+        badges.add_row(Text.assemble(("🏆 " if got else "·  ", "" if got else MUTED),
+                                     (name, "bold" if got else MUTED)), desc)
+    game.add_row("achievements", Text(f"{len(prog.unlocked)}/{len(ACHIEVEMENTS)}"))
+
     console.print()
     console.print(Text("  PROmodoro · focus history", style="bold"))
     console.print()
@@ -1060,17 +1361,51 @@ def cmd_stats(args) -> None:
     if projects:
         console.print(Text("  last 7 days by project", style="bold"))
         console.print(Panel(proj, box=box.SIMPLE, padding=(0, 1), expand=False))
+    console.print(Text("  progress", style="bold"))
+    console.print(Panel(Group(game, Text(""), badges), box=box.SIMPLE,
+                        padding=(0, 1), expand=False))
 
 
 # --------------------------------------------------------------------------
 # promo status
 # --------------------------------------------------------------------------
-def cmd_status(args) -> None:
+def running_state() -> Optional[dict]:
+    """State of the running timer, or None when no timer is running."""
     try:
         with open(STATE_PATH) as f:
             st = json.load(f)
         os.kill(int(st["pid"]), 0)
+        return st
     except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+REMOTE_COMMANDS = ("toggle", "pause", "resume", "skip", "stop", "add", "sub",
+                   "note", "task", "rate")
+
+
+def cmd_remote(argv: List[str]) -> int:
+    """`promo toggle`, `promo add 5`, `promo note "..."`: drive the running timer."""
+    line = " ".join(argv).replace("\n", " ")
+    try:
+        fd = os.open(CONTROL_PATH, os.O_WRONLY | os.O_NONBLOCK)
+    except OSError:
+        if argv[0] == "note" and len(argv) > 1:  # notes work without a timer
+            cfg = load_config()
+            path = cfg.get("notes", os.path.join(DATA_DIR, "notes.md"))
+            if append_note(path, " ".join(argv[1:]), "", Repo.detect()):
+                print(f"note saved to {tilde(path)}")
+                return 0
+        print("promo: no timer running (start one with `promo`)", file=sys.stderr)
+        return 1
+    with os.fdopen(fd, "w") as f:
+        f.write(line + "\n")
+    return 0
+
+
+def cmd_status(args) -> None:
+    st = running_state()
+    if st is None:
         if args.json:
             print(json.dumps({"text": "", "class": "idle"}))
         return
@@ -1085,6 +1420,7 @@ def cmd_status(args) -> None:
         "project": st.get("project", ""),
         "branch": st.get("branch", ""),
         "session": st.get("session", ""),
+        "combo": f"🔥{st['combo']}" if st.get("combo", 0) >= 2 else "",
     }
     text = " ".join(args.format.format(**fields).split())
     if args.json:  # waybar custom module
@@ -1141,7 +1477,7 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
                         "Prints nothing when no timer is running.")
         p.add_argument("--format", default=cfg.get("status_format", "{icon} {time}"),
                        help="placeholders: {icon} {time} {phase} {task} {project} "
-                            "{branch} {session} (default: %(default)s)")
+                            "{branch} {session} {combo} (default: %(default)s)")
         p.add_argument("--json", action="store_true", help="waybar JSON output")
         args = p.parse_args(argv[1:])
         args.command = "status"
@@ -1150,8 +1486,10 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="promo",
         description="Progressive Pomodoro timer: sessions grow with your focus.",
-        epilog="subcommands: `promo stats`, `promo status`.  "
-               "keys: space pause · s skip · +/- 1 min · n note · i details · q quit.  "
+        epilog="subcommands: stats, status, and remote control for a running timer: "
+               "toggle, pause, resume, skip, stop, add N, sub N, note TEXT, task TEXT, "
+               "rate 1-5.  keys: space pause · s skip · +/- 1 min · n note · "
+               "i details · : command · q quit.  "
                f"config: {CONFIG_PATH}",
     )
     p.add_argument("positional", nargs="*", metavar="[hours] [minutes] [task]",
@@ -1172,6 +1510,11 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
                    default=_bool(cfg.get("bell"), True), help="no terminal bell")
     p.add_argument("--no-git", dest="git", action="store_false",
                    default=_bool(cfg.get("git"), True), help="disable git integration")
+    p.add_argument("--spicy", action="store_true", default=_bool(cfg.get("spicy"), False),
+                   help="commentary with attitude (skill issue?)")
+    p.add_argument("--no-game", dest="game", action="store_false",
+                   default=_bool(cfg.get("game"), True),
+                   help="hide XP, levels, combos and achievements")
     p.add_argument("--no-title", dest="title", action="store_false",
                    default=_bool(cfg.get("title"), True),
                    help="do not show the countdown in the terminal title")
@@ -1197,12 +1540,19 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
 
 
 def main(argv: Optional[List[str]] = None) -> None:
-    args = parse_args(sys.argv[1:] if argv is None else argv)
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] in REMOTE_COMMANDS:
+        sys.exit(cmd_remote(argv))
+    args = parse_args(argv)
     if args.command == "stats":
         cmd_stats(args)
     elif args.command == "status":
         cmd_status(args)
     else:
+        st = running_state()
+        if st and int(st["pid"]) != os.getpid():
+            sys.exit(f"promo is already running (pid {st['pid']}). "
+                     "Control it with `promo toggle`, `promo skip` or `promo stop`.")
         App(args).run()
 
 
