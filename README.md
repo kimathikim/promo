@@ -30,6 +30,17 @@ It's made for people who live in the terminal: it knows which git repo and branc
 - **Hooks**: run your own command when a session starts or ends, e.g. to turn on Do Not Disturb or set your Slack status.
 - Desktop notifications (`notify-send` on Linux, `osascript` on macOS) plus the terminal bell.
 
+**Never leave the keyboard**
+- **Remote control**: `promo toggle`, `promo skip`, `promo add 10`, `promo note "..."` work from any shell, so you can bind them in tmux or your window manager. Commands reach the timer instantly.
+- **Neovim plugin**: the timer in your statusline, `:Promo` commands, and `:PromoNote` to jot down the current `file:line` without leaving the buffer.
+- **Vim-style controls**: `:` opens a command line (`:q`, `:add 10`, `:task fix auth`), and unknown commands get a proper `E492`. Pick your rating with `h`/`l` + `enter`.
+
+**A little game**
+- Earn XP for focused minutes (Flow pays best) and climb from *Intern* to *Blazingly Fast*.
+- Rate Focused or Flow in a row to build a 🔥 combo that boosts your XP.
+- Unlock achievements like *Deep Work*, *C-C-C-Combo*, *Ship It* and *Night Owl*.
+- Optional `--spicy` mode adds commentary: "45m and 0 commits… skill issue?", "go touch grass 🌱".
+
 ![Details view](docs/details.png)
 
 ## Usage
@@ -53,7 +64,9 @@ promo -t "review PR #42" 45
 | `+` / `-` | add / remove a minute |
 | `n` | capture a note (`enter` saves, `esc` cancels) |
 | `i` | show / hide details |
+| `:` | command line: `:q`, `:add 10`, `:-5`, `:task fix auth`, `:note ...`, `:skip` |
 | `q` / `Ctrl-C` | quit and show the summary |
+| `h` / `l`, `enter` | on the rating screen: move and pick (or press `1`–`5`) |
 
 ### Stats
 
@@ -76,9 +89,68 @@ set -g status-interval 1
 # waybar module
 "custom/promo": { "exec": "promo status --json", "return-type": "json", "interval": 1 }
 
-# custom format; placeholders: {icon} {time} {phase} {task} {project} {branch} {session}
-promo status --format "{icon} {time} {task}"
+# custom format; placeholders: {icon} {time} {phase} {task} {project} {branch} {session} {combo}
+promo status --format "{icon} {time} {combo}"
 ```
+
+### Remote control
+
+While a timer is running, any shell can drive it:
+
+```sh
+promo toggle            # pause / resume   (also: pause, resume)
+promo skip              # end the current phase
+promo add 10            # +10 minutes      (sub 5 for −5)
+promo task "fix auth"   # change the task label
+promo note "check token expiry"   # works even with no timer running
+promo rate 4            # answer the rating screen
+promo stop              # quit and log what you did
+```
+
+Only one timer runs at a time; starting a second one tells you how to control the first.
+
+### tmux
+
+Run the timer in its own window and control it from anywhere:
+
+```tmux
+# ~/.tmux.conf
+bind-key P new-window -d -n promo 'promo'           # start it in the background
+bind-key p run-shell -b 'promo toggle'               # prefix p: pause / resume
+bind-key N command-prompt -p 'note:' "run-shell -b 'promo note \"%%\"'"
+set -g status-right '#(promo status) %H:%M'
+set -g status-interval 1
+```
+
+### Neovim
+
+The plugin lives in this repo (`lua/promo`). With [lazy.nvim](https://github.com/folke/lazy.nvim):
+
+```lua
+{
+  "kimathikim/promo",
+  config = function()
+    require("promo").setup({ keymaps = true })
+  end,
+}
+```
+
+```lua
+-- lualine
+sections = { lualine_x = { require("promo").statusline } }
+```
+
+| Command | Action |
+|---|---|
+| `:Promo` / `:Promo open [min] [task]` | open or hide the timer in a floating terminal (`<C-q>` hides it; the timer keeps running) |
+| `:Promo toggle`, `skip`, `stop`, `add 10`, `task ...`, `rate 4` | control the timer |
+| `:PromoNote [text]` | save a note; with no text it captures `file:line` and the current line |
+
+With `keymaps = true`: `<leader>po` open/hide, `<leader>pp` pause/resume, `<leader>ps` skip, `<leader>pn` note at cursor, `<leader>pa` add 5 minutes.
+
+### XP, levels and achievements
+
+Each focus session earns XP: minutes × your focus rating (Distracted 0.5×, Normal 1×, Focused 1.25×, Flow 1.5×), plus 10% per combo step (up to 50%). Levels run *Intern → Junior Dev → Mid-level Dev → Senior Dev → Staff Engineer → Principal Engineer → Distinguished Engineer → 10x Engineer → Blazingly Fast*. Everything is computed from your session log, so nothing extra is stored. `promo stats` shows your level, best combo and achievements; `--no-game` hides it all.
 
 ### Hooks
 
@@ -106,6 +178,8 @@ hook = ~/bin/promo-dnd
 bell = true
 git = true
 title = true
+game = true               ; XP, levels, combos, achievements
+spicy = false             ; commentary with attitude
 status_format = {icon} {time}
 ```
 
@@ -134,13 +208,14 @@ status_format = {icon} {time}
 |---|---|
 | `~/.local/share/promo/sessions.csv` | one row per phase: `date, start, end, phase, planned_min, actual_min, focus_level, task, project, branch, commits` |
 | `~/.local/share/promo/notes.md` | notes captured with `n` |
-| `~/.cache/promo/state.json` | the running timer, read by `promo status` |
+| `~/.cache/promo/state.json` | the running timer, read by `promo status` and the Neovim plugin |
+| `~/.cache/promo/control` | named pipe the running timer listens on for remote commands |
 
 `XDG_DATA_HOME`, `XDG_CACHE_HOME` and `XDG_CONFIG_HOME` are respected. Use `--log` / `--notes` to use other paths.
 
 ## Installation
 
-Requires Python 3.7+ and [`rich`](https://github.com/Textualize/rich). Keyboard controls need a Unix-like terminal (Linux or macOS). A terminal with true colour and a font that has block characters looks best.
+Requires Python 3.7+ and [`rich`](https://github.com/Textualize/rich). The Neovim plugin needs Neovim 0.8+. Keyboard controls need a Unix-like terminal (Linux or macOS). A terminal with true colour and a font that has block characters looks best.
 
 ```sh
 git clone https://github.com/kimathikim/promo.git ~/promo
