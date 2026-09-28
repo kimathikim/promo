@@ -625,6 +625,106 @@ def write_state(state: Optional[dict]) -> None:
         pass
 
 
+# --------------------------------------------------------------------------
+# Sound: synthesised chimes, played with whatever the system already has
+# --------------------------------------------------------------------------
+# (frequency Hz, seconds) per note; 0 Hz is a rest
+SOUNDS = {
+    "focus_end": [(784, 0.16), (988, 0.16), (1175, 0.16), (1568, 0.55)],  # rising: done!
+    "break_end": [(1047, 0.14), (0, 0.06), (1047, 0.14), (1568, 0.45)],   # back to work
+    "long_break_end": [(659, 0.2), (784, 0.2), (1047, 0.6)],
+    "kudos": [(1319, 0.08), (1760, 0.22)],
+}
+SOUND_PLAYERS = [  # first one found wins
+    ("pw-play", []), ("paplay", []), ("aplay", ["-q"]), ("afplay", []),
+    ("ffplay", ["-nodisp", "-autoexit", "-loglevel", "quiet"]),
+]
+SAMPLE_RATE = 44100
+
+
+def synth_wav(path: str, notes: List[Tuple[float, float]], volume: float, repeat: int) -> None:
+    """Write a bell-like chime: a few harmonics with a fast attack and soft decay."""
+    import struct
+    import wave
+    frames = bytearray()
+    for r in range(repeat):
+        for freq, length in notes:
+            n = int(SAMPLE_RATE * length)
+            for i in range(n):
+                t = i / SAMPLE_RATE
+                if not freq:
+                    frames += b"\0\0"
+                    continue
+                env = min(1.0, t / 0.005) * math.exp(-t / (length * 0.45 + 0.05))
+                v = (math.sin(2 * math.pi * freq * t)
+                     + 0.35 * math.sin(4 * math.pi * freq * t)
+                     + 0.12 * math.sin(6 * math.pi * freq * t)) / 1.47
+                frames += struct.pack("<h", int(32767 * volume * env * v))
+        if r < repeat - 1:
+            frames += b"\0\0" * int(SAMPLE_RATE * 0.6)
+    ensure_dir(path)
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SAMPLE_RATE)
+        w.writeframes(bytes(frames))
+
+
+def sound_player() -> Optional[List[str]]:
+    for exe, extra in SOUND_PLAYERS:
+        found = shutil.which(exe)
+        if found:
+            return [found, *extra]
+    return None
+
+
+def play_sound(kind: str, volume: float = 0.7, repeat: int = 1,
+               custom: str = "") -> bool:
+    """Play a chime (or the user's own file) without blocking. False if silent."""
+    path = os.path.expanduser(custom) if custom else os.path.join(
+        CACHE_DIR, "sounds", f"{kind}-{int(volume * 100)}-{repeat}.wav")
+    try:
+        if not custom and not os.path.exists(path):
+            synth_wav(path, SOUNDS[kind], max(0.0, min(1.0, volume)), max(1, repeat))
+        if sys.platform == "win32":
+            import winsound
+            winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+            return True
+        player = sound_player()
+        if not player or not os.path.exists(path):
+            return False
+        subprocess.Popen([*player, path], stdin=subprocess.DEVNULL,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+        return True
+    except (OSError, KeyError, RuntimeError):
+        return False
+
+
+def cmd_sound(argv: List[str]) -> int:
+    """`promo sound [kind]`: preview the chimes and show which player is used."""
+    cfg = load_config()
+    kinds = argv or list(SOUNDS)
+    bad = [k for k in kinds if k not in SOUNDS]
+    if bad:
+        print(f"promo: unknown sound {bad[0]!r}; choose from {', '.join(SOUNDS)}",
+              file=sys.stderr)
+        return 1
+    player = "winsound" if sys.platform == "win32" else (sound_player() or [None])[0]
+    if not player:
+        print("promo: no audio player found. Install one of: "
+              + ", ".join(exe for exe, _ in SOUND_PLAYERS)
+              + " (e.g. `sudo apt install pulseaudio-utils` or `alsa-utils`)", file=sys.stderr)
+        return 1
+    volume = float(cfg.get("volume", 0.7))
+    for kind in kinds:
+        custom = cfg.get(f"sound_{kind}", "")
+        print(f"♪ {kind:<15} {tilde(custom) if custom else 'built-in chime'}  via {os.path.basename(player)}")
+        play_sound(kind, volume, 1, custom)
+        time.sleep(sum(d for _, d in SOUNDS[kind]) + 0.6)
+    return 0
+
+
 def notify(title: str, body: str, bell: bool) -> None:
     if bell:
         sys.stdout.write("\a")
@@ -944,6 +1044,18 @@ class App:
         except OSError:
             pass
 
+    def alert(self, kind: str, title: str = "", body: str = "") -> None:
+        """Chime, terminal bell and desktop notification for an event."""
+        a = self.args
+        if a.sound:
+            play_sound(kind, a.volume, a.sound_repeat if kind != "kudos" else 1,
+                       a.sound_files.get(kind, ""))
+        if title:
+            notify(title, body, a.bell)
+        elif a.bell:
+            sys.stdout.write("\a")
+            sys.stdout.flush()
+
     def push_stats(self) -> None:
         if self.squad:
             self.squad.stats = squad_stats(self.log.rows(), self.progress)
@@ -1101,6 +1213,8 @@ class App:
                 if news:
                     me = self.squad.client.name
                     self.say("   ".join(describe_event(e, me) for e in news[-3:]), 8)
+                    if any(e["type"] == "kudos" for e in news):
+                        self.alert("kudos")
             live.update(self.ui.timer(phase, now), refresh=True)
             self.set_title(phase)
             keys, commands = inp.read(self.wait_time(phase, now))
@@ -1198,7 +1312,6 @@ class App:
         return news
 
     def cycle(self, live: Live, inp: Input) -> None:
-        bell = self.args.bell
         if self.repo:
             self.repo.refresh_branch()
         focus = Phase("focus", self.first_seconds or self.focus_min * 60)
@@ -1208,7 +1321,7 @@ class App:
         self.hook("focus_end", focus)
         focused_min = focus.elapsed / 60
         activity = self.repo.activity_since(focus.started_at) if self.repo else (0, 0, 0)
-        notify("Focus session done", f"{fmt_minutes(focused_min)} focused", bell)
+        self.alert("focus_end", "Focus session done", f"{fmt_minutes(focused_min)} focused")
 
         # rate before logging so the level lands on the focus row
         level = self.ask_level(live, inp, focused_min, activity)
@@ -1241,7 +1354,8 @@ class App:
         self.run_phase(live, inp, brk)
         self.hook("break_end", brk)
         self.finish(brk)
-        notify("Break over", f"Next: {fmt_minutes(self.focus_min)} of focus", bell)
+        self.alert("long_break_end" if brk.kind == "long_break" else "break_end",
+                   "Break over", f"Next: {fmt_minutes(self.focus_min)} of focus")
 
     def run(self) -> None:
         try:
@@ -2206,7 +2320,7 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="promo",
         description="Progressive Pomodoro timer: sessions grow with your focus.",
-        epilog="subcommands: stats, status, card, squad, serve, join NAME, kudos NAME, "
+        epilog="subcommands: stats, status, sound, card, squad, serve, join NAME, kudos NAME, "
                "and remote control for a running timer: "
                "toggle, pause, resume, skip, stop, add N, sub N, note TEXT, task TEXT, "
                "rate 1-5.  keys: space pause · s skip · +/- 1 min · n note · "
@@ -2229,6 +2343,9 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
                         "break_end, pause, resume and quit (see README)")
     p.add_argument("--no-bell", dest="bell", action="store_false",
                    default=_bool(cfg.get("bell"), True), help="no terminal bell")
+    p.add_argument("--no-sound", dest="sound", action="store_false",
+                   default=_bool(cfg.get("sound"), True),
+                   help="no chime when a phase ends (preview with `promo sound`)")
     p.add_argument("--no-git", dest="git", action="store_false",
                    default=_bool(cfg.get("git"), True), help="disable git integration")
     p.add_argument("--no-squad", dest="squad", action="store_false", default=True,
@@ -2260,6 +2377,12 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     args.minutes = min(MAX_FOCUS_MINUTES, total)
     args.task = args.task_opt or " ".join(words) or cfg.get("task", "")
     args.share_task = _bool(cfg.get("share_task"), False)
+    try:
+        args.volume = max(0.0, min(1.0, float(cfg.get("volume", 0.7))))
+        args.sound_repeat = max(1, min(10, int(cfg.get("sound_repeat", 2))))
+    except ValueError:
+        p.error("config: volume must be 0-1 and sound_repeat a whole number")
+    args.sound_files = {k: cfg[f"sound_{k}"] for k in SOUNDS if cfg.get(f"sound_{k}")}
     args.squad_client = squad_client(cfg) if args.squad else None
     return args
 
@@ -2268,7 +2391,8 @@ def main(argv: Optional[List[str]] = None) -> None:
     argv = sys.argv[1:] if argv is None else argv
     if argv and argv[0] in REMOTE_COMMANDS:
         sys.exit(cmd_remote(argv))
-    simple = {"serve": cmd_serve, "squad": cmd_squad, "kudos": cmd_kudos, "card": cmd_card}
+    simple = {"serve": cmd_serve, "squad": cmd_squad, "kudos": cmd_kudos, "card": cmd_card,
+              "sound": cmd_sound}
     if argv and argv[0] in simple:
         sys.exit(simple[argv[0]](argv[1:]) or 0)
     joined, first_seconds = "", None

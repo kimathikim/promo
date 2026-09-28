@@ -28,7 +28,7 @@ It's made for people who live in the terminal: it knows which git repo and branc
 - **`promo stats`**: a GitHub-style focus heatmap, streaks, week-over-week trend, a focus-level breakdown, your peak hour of the day, and time per project.
 - **`promo status`**: a one-line status for tmux, waybar, polybar or your shell prompt.
 - **Hooks**: run your own command when a session starts or ends, e.g. to turn on Do Not Disturb or set your Slack status.
-- Desktop notifications (`notify-send` on Linux, `osascript` on macOS) plus the terminal bell.
+- **Sound**: a chime when focus ends, a different one when your break is over, and a soft one for kudos. Swap in your own files if you like. There are also desktop notifications (`notify-send` on Linux, `osascript` on macOS) and the terminal bell.
 
 **Never leave the keyboard**
 - **Remote control**: `promo toggle`, `promo skip`, `promo add 10`, `promo note "..."` work from any shell, so you can bind them in tmux or your window manager. Commands reach the timer instantly.
@@ -214,6 +214,24 @@ Your task and repo name are shared only with `share_task = true`. Notes, commit 
 
 ![promo card](docs/card.png)
 
+### Sound
+
+Every phase ends with a chime, played by an audio player you already have (`pw-play`, `paplay`, `aplay` or `ffplay` on Linux, `afplay` on macOS, built in on Windows). The chimes are generated on first use, so there's nothing to download.
+
+```sh
+promo sound               # preview every sound and see which player is used
+promo sound focus_end     # just one: focus_end, break_end, long_break_end, kudos
+promo --no-sound          # silent run
+```
+
+```ini
+[promo]
+volume = 0.7                          ; 0 to 1
+sound_repeat = 2                      ; ring the end-of-phase chime twice
+sound_focus_end = ~/sounds/gong.ogg   ; your own file for any sound
+sound = false                         ; turn chimes off
+```
+
 ### Config file
 
 Defaults can be set in `~/.config/promo/config.ini`; command-line flags override them.
@@ -225,6 +243,8 @@ goal = 240                ; daily focus goal in minutes (0 = off)
 long_break_after = 180
 hook = ~/bin/promo-dnd
 bell = true
+sound = true              ; chimes (see Sound above)
+volume = 0.7
 git = true
 title = true
 game = true               ; XP, levels, combos, achievements
