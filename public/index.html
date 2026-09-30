@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>promo · leaderboard</title>
   <meta name="description" content="Live leaderboard for promo, the progressive Pomodoro timer for developers. See who is focusing right now.">
-  <meta name="theme-color" content="#0000f2">
+  <meta name="theme-color" content="#c4361c">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/newsreader.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
@@ -22,6 +22,7 @@
       <a href="#board-h">Leaderboard</a>
       <a href="#feed-h">Feed</a>
       <a href="#join-h">Join</a>
+      <a href="#crew-h">Built by</a>
       <a href="https://github.com/kimathikim/promo">GitHub</a>
     </nav>
     <span id="live" class="live" aria-live="polite">Connecting</span>
@@ -30,7 +31,51 @@
   <main>
     <!-- ======================================================== hero -->
     <section class="hero grain" aria-labelledby="title">
-      <p class="ghost" aria-hidden="true" id="ghost">global</p>
+      <pre class="ascii" aria-hidden="true">                                                     ###
+                                                     ###
+                                                     ###
+                                                    %###%%
+                                                    λ###%%
+                                                    %###%%-----=====+
+                                             --:::%%%###%%%λ--------====++*
+                                     -:::::········%%%%%%λ%%:::------=====++**
+                               :···............········:%%%%%%%:------=====+++**{
+                          ··......................·······:%%%%%%λ%-----====++++**{{}
+                      ·.......         ............······::%%%λ%%%%%%--=====+++***{{}%
+                   ·......               ..........······::::%%%%%%%%%%====++++***{{{}%#
+                 ·.....                  ..........······:::::::%%%%%λ%%%==++++***{{{}}%%
+               ·......                  ..........······:::::::----λ%%%%%==++++***{{{}}}%%#
+             :·.......                ...........······:::::::-------=====++++****{{{}}}%%##$
+            :·........            ..............·····::::::::-------=====+++++****{{{}}}%%%##$$
+           :··................................······::::::::-------======++++****{{{{}}}%%%###$$
+           :···.............................······::::::::--------=====+++++*****{{{{}}}}%%%##$$$$
+          -:···.........................········::::::::--------======+++++*****{{{{{}}}}%%%###$$$$
+          -::····...................·········:::::::::---------======+++++*****{{{{{}}}}}%%%###$$$$$
+          -::::·····...........··········:::::::::::---------======++++++******{{{{{}}}}%%%%##########
+          --:::::·····················::::::::::::--------========++++++******{{{{{}}}}}%%%%##########
+         =---::::::::············:::::::::::::----------========+++++++******{{{{{}}}}}%%%%%###########
+         +=----::::::::::::::::::::::::::::-----------========+++++++*******{{{{{}}}}}%%%%%#############
+         +==------::::::::::::::::::::------------=========++++++++*******{{{{{{}}}}}%%%%%##############
+         ++===---------------------------------==========++++++++*******{{{{{{}}}}}}%%%%%###############
+         *+=====---------------------------===========++++++++*******{{{{{{{}}}}}}%%%%%#################
+         *++=======-------------------============+++++++++*******{{{{{{{}}}}}}%%%%%%##################
+         {*+++================================++++++++++*******{{{{{{{}}}}}}%%%%%%#####################
+          *+++++==========================++++++++++*********{{{{{{}}}}}}%%%%%%#####$$$$$$$$##########
+          **+++++++=================++++++++++++***********{{{{{{}}}}}%%%%%%#####$$$$$$$$$$$$$$$$$###
+          {***+++++++++++++++++++++++++++++**********{{{{{{{{{{}}}}}%%%%%#####$$$$$$$$$$$$$$$$$$$$$$
+          }{****++++++++++++++++++++++**********{{{{{{{{{{{{}}}}}}}%%%%#####$$$$$$$$$$$$$$$$$$$$$$
+           {{*********+++++++**************{{{{{{{{{{{{}}}}}}}}}%%%%%%####$$$$$$$$$$$$$$$$$$$$$$$
+            }{{{*********************{{{{{{{{{{{}}}}}}}}}}}}}%%%%%%%####$$$$$$$$$$$$$$$$$$$$$$$
+             }{{{{{{{{{{**{{{{{{{{{{{{{{{{}}}}}}}}}}}}}%%%%%%%%%%#####$$$$$$$$$$$$$$$$$$$$$$$$
+              %}}}{{{{{{{{{{{{{{{{}}}}}}}}}}}}%%%%%%%%%%%%%%%##########$$$$$$$$$$$$$$$$$$$$$
+                %}}}}}}}}}}}}}}}}}}}}}%%%%%%%%%%%%%%#####################$$$$$$$$$$$$$$$$$
+                  %%%%%%%%%%%%%%%%%%%%%%%###################################$$$$$$$$$$$$
+                    #########################$$$$$$$$$$$$#####################$$$$$$$$$
+                        ###$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$#######################$$$$$
+                            $$$$$$$$$$$$$$$$$$$$$$$$$$$$$#########################
+                                  $$$$$$$$$$$$$$$$$$$$$$$#######################
+                                         $$$$$$$$$$$$$$$####################
+                                                 $$$$$$$################</pre>
       <p class="eyebrow">Room / <span id="room-name">global</span></p>
       <h1 id="title" class="display">Focus,<br>together.</h1>
       <p class="lede">Every session, every streak, every developer in the room. Updated the moment it happens.</p>
@@ -51,7 +96,7 @@
     </section>
 
     <!-- ======================================================== right now -->
-    <section class="band" aria-labelledby="now-h">
+    <section class="band glyphs" data-surface="ink" aria-labelledby="now-h">
       <div class="band-head">
         <h2 id="now-h" class="h2">Right now</h2>
         <p class="caption">Live timers. Updated every second.</p>
@@ -60,7 +105,7 @@
     </section>
 
     <!-- ======================================================== leaderboard -->
-    <section class="band paper" data-surface="white" aria-labelledby="board-h">
+    <section class="band" data-surface="paper" aria-labelledby="board-h">
       <div class="band-head">
         <h2 id="board-h" class="h2">Leaderboard</h2>
         <div class="toolbar">
@@ -86,7 +131,7 @@
     </section>
 
     <!-- ======================================================== feed -->
-    <section class="band grain" aria-labelledby="feed-h">
+    <section class="band glyphs" data-surface="ink" aria-labelledby="feed-h">
       <div class="band-head">
         <h2 id="feed-h" class="h2">The feed</h2>
         <p class="caption">tail -f feed.log</p>
@@ -95,7 +140,7 @@
     </section>
 
     <!-- ======================================================== join -->
-    <section class="band paper" data-surface="white" aria-labelledby="join-h">
+    <section class="band" data-surface="paper" aria-labelledby="join-h">
       <div class="band-head">
         <h2 id="join-h" class="h2">Join in thirty seconds</h2>
         <p class="caption">Opt-in. Free. Open source.</p>
@@ -126,6 +171,30 @@ chmod +x ~/.local/bin/promo</code></pre>
       </ol>
       <p class="privacy">Shared: your name, current phase and time left, focus minutes, streak, XP, level and wins. Never shared: notes, code, commit messages or file names. Task and repo only with <code>share_task = true</code>.</p>
     </section>
+
+    <!-- ======================================================== contributors -->
+    <section class="band glyphs" data-surface="ink" aria-labelledby="crew-h">
+      <div class="band-head">
+        <h2 id="crew-h" class="h2">Built by</h2>
+        <p class="caption">Pulled live from GitHub</p>
+      </div>
+      <div class="crew">
+        <article class="creator" id="creator" aria-label="Creator">
+          <img class="avatar" id="creator-img" src="https://avatars.githubusercontent.com/u/90571049?v=4&amp;s=400" alt="" width="200" height="200">
+          <div class="creator-body">
+            <p class="eyebrow">Creator</p>
+            <h3 class="h4" id="creator-name">Brian Kimathi</h3>
+            <p class="creator-meta" id="creator-meta">@kimathikim · Nairobi, Kenya</p>
+            <p class="creator-links" id="creator-links"><a class="btn btn-sm" href="https://github.com/kimathikim">GitHub</a> <a class="btn btn-sm" href="https://x.com/b_kimathi">X</a></p>
+          </div>
+        </article>
+        <div class="crew-list">
+          <p class="caption" id="crew-count">Contributors</p>
+          <ul class="contributors" id="contributors"></ul>
+          <a class="btn btn-ghost crew-cta" href="https://github.com/kimathikim/promo/issues">Become a contributor</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="foot grain">
@@ -141,7 +210,7 @@ chmod +x ~/.local/bin/promo</code></pre>
     </div>
   </footer>
 
-  <dialog id="help" data-surface="white" aria-labelledby="help-h">
+  <dialog id="help" data-surface="paper" aria-labelledby="help-h">
     <h2 id="help-h" class="h4">Keyboard</h2>
     <dl>
       <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Sort by today, week, streak, XP</dd>

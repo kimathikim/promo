@@ -434,6 +434,55 @@
     setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1600);
   }));
 
+  // ------------------------------------------------------------ contributors
+  const safe = (u, prefix) => (typeof u === "string" && u.startsWith(prefix) ? u : "");
+
+  async function loadCrew() {
+    let data;
+    try {
+      const res = await fetch("/api/contributors");
+      if (!res.ok) throw new Error(String(res.status));
+      data = await res.json();
+    } catch {
+      return; // keep the creator card that ships in the HTML
+    }
+    const c = data.creator || {};
+    const img = safe(c.avatar_url, "https://avatars.githubusercontent.com/");
+    if (img) $("#creator-img").src = `${img}${img.includes("?") ? "&" : "?"}s=400`;
+    if (c.name) $("#creator-name").textContent = c.name;
+    const meta = [`@${c.login}`, c.location, c.contributions ? `${c.contributions} commits` : ""].filter(Boolean);
+    $("#creator-meta").textContent = meta.join(" · ");
+    const links = $("#creator-links");
+    links.replaceChildren();
+    const link = (href, text) => {
+      const a = el("a", "btn btn-sm", text);
+      a.href = href;
+      links.append(a, " ");
+    };
+    if (safe(c.html_url, "https://github.com/")) link(c.html_url, "GitHub");
+    if (/^[A-Za-z0-9_]{1,15}$/.test(c.twitter_username || "")) link(`https://x.com/${c.twitter_username}`, "X");
+
+    const list = $("#contributors");
+    list.replaceChildren();
+    const people = (data.contributors || []).filter((p) => safe(p.html_url, "https://github.com/"));
+    for (const p of people) {
+      const li = el("li");
+      const a = el("a", "contributor");
+      a.href = p.html_url;
+      const av = el("img");
+      av.src = `${safe(p.avatar_url, "https://avatars.githubusercontent.com/")}&s=160`;
+      av.alt = "";
+      av.width = 80;
+      av.height = 80;
+      av.decoding = "async";
+      a.append(av, el("span", "login", p.login), el("span", "commits", `${p.contributions} commit${p.contributions === 1 ? "" : "s"}${p.bot ? " · bot" : ""}`));
+      li.append(a);
+      list.append(li);
+    }
+    const total = people.length + 1;
+    $("#crew-count").textContent = `${total} contributor${total === 1 ? "" : "s"} on GitHub`;
+  }
+
   // ------------------------------------------------------------ boot
   function typeCommand(text, done) {
     const out = $("#cmd");
@@ -449,7 +498,6 @@
 
   function boot() {
     $("#room-name").textContent = room;
-    $("#ghost").textContent = room;
     const url = `${location.origin}/r/${room}`;
     $("#join-cmd").textContent = `promo squad join ${url} --name YOUR_NAME${token ? " --token YOUR_TOKEN" : ""}`;
     document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.sort === S.sort)));
@@ -459,6 +507,7 @@
       setInterval(() => { if (!document.hidden) load(); }, POLL_MS);
     });
     document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+    loadCrew();
     setInterval(() => {
       tickCards();
       if (S.lastOk) $("#updated").textContent = `updated ${Math.round((Date.now() - S.lastOk) / 1000)}s ago`;
