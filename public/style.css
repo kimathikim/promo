@@ -380,10 +380,22 @@ td.num.metric { font-family: var(--font-display); font-weight: 300; font-size: 1
 .step-n { font-size: 4.5rem; line-height: .8; color: var(--fg); margin-bottom: 1rem; }
 .steps p { margin: 0; color: var(--fg-2); }
 .steps pre {
-  margin: auto 0 0; padding: 1rem; background: var(--inset); color: var(--fg);
-  font-size: .8125rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere;
+  margin: .25rem 0 0; padding: 1rem; background: var(--inset); color: var(--fg);
+  font-size: .8125rem; line-height: 1.6;
+  /* wrap at spaces only, never inside a URL; scroll if one is still too long */
+  white-space: pre-wrap; overflow-wrap: normal; word-break: normal;
+  overflow-x: auto; scrollbar-width: thin;
 }
 .steps .copy { align-self: flex-start; }
+.manual { margin-top: .5rem; border-top: 1px solid var(--divider); padding-top: .75rem; display: flex; flex-direction: column; gap: .75rem; }
+.manual summary { cursor: pointer; font: 500 var(--caption)/1.4 var(--font-ui); text-transform: uppercase; letter-spacing: .1em; color: var(--fg); list-style: none; }
+.manual summary::-webkit-details-marker { display: none; }
+.manual summary::before { content: "+ "; font-family: var(--font-mono); color: var(--hl); }
+.manual[open] summary::before { content: "− "; }
+.manual[open] { display: flex; }
+.manual pre { margin: 0; }
+.manual p { font-size: .875rem; }
+.manual p { font-size: .8125rem; }
 .privacy { margin: 2rem 0 0; max-width: 80ch; color: var(--fg-2); font-size: .9375rem; }
 code { font-size: .92em; }
 
