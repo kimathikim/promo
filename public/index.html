@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>promo · leaderboard</title>
+  <meta name="description" content="Live leaderboard for promo, the progressive Pomodoro timer for developers. See who is focusing right now.">
+  <meta name="theme-color" content="#0b0d10">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#board">Skip to leaderboard</a>
+  <main class="term" aria-labelledby="title">
+    <header class="titlebar">
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <h1 id="title">promo <span class="muted">— leaderboard ·</span> <span id="room-name">global</span></h1>
+      <span id="live" class="live" aria-live="polite">connecting…</span>
+    </header>
+
+    <div class="screen">
+      <section class="boot" aria-label="Session">
+        <p class="prompt"><span class="ps1">~/focus</span> <span class="ps2">❯</span> <span id="cmd"></span><span class="cursor" aria-hidden="true"></span></p>
+        <p id="status-line" class="muted"></p>
+        <p id="demo-banner" class="banner" hidden></p>
+      </section>
+
+      <section class="pulse" aria-label="Totals today">
+        <div class="stat"><span class="label">focused today</span><strong id="total-today">—</strong></div>
+        <div class="stat"><span class="label">devs</span><strong id="total-devs">—</strong></div>
+        <div class="stat"><span class="label">focusing now</span><strong id="total-now" class="hot">—</strong></div>
+        <div class="stat"><span class="label">hottest combo</span><strong id="total-combo">—</strong></div>
+      </section>
+
+      <section aria-labelledby="now-h">
+        <h2 id="now-h" class="rule"><span>right now</span></h2>
+        <ul id="now" class="now"></ul>
+      </section>
+
+      <div class="split">
+        <section aria-labelledby="board-h" class="board-wrap">
+          <div class="rule board-head">
+            <h2 id="board-h"><span>leaderboard</span></h2>
+            <div class="tabs" role="group" aria-label="Sort leaderboard by">
+              <button data-sort="today" aria-pressed="true"><kbd>1</kbd> today</button>
+              <button data-sort="week" aria-pressed="false"><kbd>2</kbd> week</button>
+              <button data-sort="streak" aria-pressed="false"><kbd>3</kbd> streak</button>
+              <button data-sort="xp" aria-pressed="false"><kbd>4</kbd> xp</button>
+            </div>
+          </div>
+          <p id="you" class="you" hidden></p>
+          <table id="board" class="board">
+            <caption class="sr-only">Developers ranked by focus time</caption>
+            <thead><tr><th scope="col">#</th><th scope="col">dev</th><th scope="col" class="bar-col"><span class="sr-only">relative</span></th><th scope="col" id="metric-h" class="num">today</th><th scope="col" class="lvl">level</th><th scope="col" class="num combo-col">combo</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+          <p id="empty" class="empty" hidden></p>
+        </section>
+
+        <section aria-labelledby="feed-h" class="feed-wrap">
+          <h2 id="feed-h" class="rule"><span>tail -f feed.log</span></h2>
+          <ol id="feed" class="feed" aria-live="polite" aria-relevant="additions"></ol>
+        </section>
+      </div>
+
+      <section aria-labelledby="join-h" class="join">
+        <h2 id="join-h" class="rule"><span>join in 30 seconds</span></h2>
+        <ol class="steps">
+          <li><span class="muted"># 1. get promo (Python 3.7+)</span>
+            <pre><code id="install">pip install rich
+curl -fsSL https://raw.githubusercontent.com/kimathikim/promo/main/promo.py -o ~/.local/bin/promo
+chmod +x ~/.local/bin/promo</code></pre>
+            <button class="copy" data-copy="install">copy</button></li>
+          <li><span class="muted"># 2. join this leaderboard</span>
+            <pre><code id="join-cmd"></code></pre>
+            <button class="copy" data-copy="join-cmd">copy</button></li>
+          <li><span class="muted"># 3. focus</span>
+            <pre><code>promo 25 "ship the thing"</code></pre></li>
+        </ol>
+        <p class="privacy muted">Opt-in only. Shared: your name, current phase and time left, focus minutes, streak, XP, level and wins. Never shared: notes, code, commit messages, file names. Task and repo only with <code>share_task = true</code>.</p>
+      </section>
+    </div>
+
+    <footer class="statusbar" aria-label="Keyboard shortcuts">
+      <span class="mode" id="mode">NORMAL</span>
+      <span class="keys"><kbd>1-4</kbd> sort <kbd>j</kbd><kbd>k</kbd> move <kbd>/</kbd> filter <kbd>m</kbd> that's me <kbd>?</kbd> help</span>
+      <label class="filter" id="filter-wrap" hidden><span aria-hidden="true">/</span><input id="filter" type="search" placeholder="filter devs" aria-label="Filter developers"></label>
+      <span class="right" id="updated"></span>
+    </footer>
+  </main>
+
+  <dialog id="help" aria-labelledby="help-h">
+    <h2 id="help-h">:help promo</h2>
+    <dl>
+      <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>sort by today, week, streak, xp</dd>
+      <dt><kbd>j</kbd> / <kbd>k</kbd></dt><dd>move the cursor down / up</dd>
+      <dt><kbd>g</kbd> / <kbd>G</kbd></dt><dd>jump to top / bottom</dd>
+      <dt><kbd>enter</kbd></dt><dd>expand the selected dev</dd>
+      <dt><kbd>m</kbd></dt><dd>mark the selected dev as you</dd>
+      <dt><kbd>/</kbd></dt><dd>filter by name, <kbd>esc</kbd> to clear</dd>
+      <dt><kbd>?</kbd></dt><dd>this help</dd>
+    </dl>
+    <p class="muted">Private squad? Open <code>/r/your-room</code>.</p>
+    <form method="dialog"><button>:q</button></form>
+  </dialog>
+</body>
+</html>
