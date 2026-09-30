@@ -251,7 +251,7 @@ A terminal-styled, keyboard-driven leaderboard lives in this repo:
 **Keys:** `1`–`4` sort, `j`/`k` move, `enter` expand, `m` "that's me", `/` filter, `?` help. `/r/<room>` shows a private squad.
 
 **Deploy it (about 3 minutes, free tiers):**
-1. On [vercel.com/new](https://vercel.com/new), import `kimathikim/promo`. There's no build step, and `vercel.json` already routes everything.
+1. On [vercel.com/new](https://vercel.com/new), import `kimathikim/promo`. There's no build step. `vercel.json` sets the framework to none and `.vercelignore` hides the Python CLI, so even if Vercel suggests a Python preset you can leave it (or pick **Other**).
 2. In the project, open **Storage → Marketplace → Upstash (Redis)**, create a database and connect it. Vercel adds `KV_REST_API_URL` and `KV_REST_API_TOKEN` for you.
 3. Redeploy. Your leaderboard is at `https://<project>.vercel.app`, and the global room is at `/r/global`.
 
