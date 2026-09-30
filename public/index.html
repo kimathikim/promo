@@ -2,110 +2,157 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>promo · leaderboard</title>
   <meta name="description" content="Live leaderboard for promo, the progressive Pomodoro timer for developers. See who is focusing right now.">
-  <meta name="theme-color" content="#0b0d10">
+  <meta name="theme-color" content="#0000f2">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap">
+  <link rel="preload" href="/fonts/newsreader.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
   <a class="skip" href="#board">Skip to leaderboard</a>
-  <main class="term" aria-labelledby="title">
-    <header class="titlebar">
-      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-      <h1 id="title">promo <span class="muted">— leaderboard ·</span> <span id="room-name">global</span></h1>
-      <span id="live" class="live" aria-live="polite">connecting…</span>
-    </header>
 
-    <div class="screen">
-      <section class="boot" aria-label="Session">
-        <p class="prompt"><span class="ps1">~/focus</span> <span class="ps2">❯</span> <span id="cmd"></span><span class="cursor" aria-hidden="true"></span></p>
-        <p id="status-line" class="muted"></p>
-        <p id="demo-banner" class="banner" hidden></p>
-      </section>
+  <header class="site-head">
+    <a class="brand" href="/" aria-label="promo home">Promo</a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#now-h">Right now</a>
+      <a href="#board-h">Leaderboard</a>
+      <a href="#feed-h">Feed</a>
+      <a href="#join-h">Join</a>
+      <a href="https://github.com/kimathikim/promo">GitHub</a>
+    </nav>
+    <span id="live" class="live" aria-live="polite">Connecting</span>
+  </header>
 
-      <section class="pulse" aria-label="Totals today">
-        <div class="stat"><span class="label">focused today</span><strong id="total-today">—</strong></div>
-        <div class="stat"><span class="label">devs</span><strong id="total-devs">—</strong></div>
-        <div class="stat"><span class="label">focusing now</span><strong id="total-now" class="hot">—</strong></div>
-        <div class="stat"><span class="label">hottest combo</span><strong id="total-combo">—</strong></div>
-      </section>
-
-      <section aria-labelledby="now-h">
-        <h2 id="now-h" class="rule"><span>right now</span></h2>
-        <ul id="now" class="now"></ul>
-      </section>
-
-      <div class="split">
-        <section aria-labelledby="board-h" class="board-wrap">
-          <div class="rule board-head">
-            <h2 id="board-h"><span>leaderboard</span></h2>
-            <div class="tabs" role="group" aria-label="Sort leaderboard by">
-              <button data-sort="today" aria-pressed="true"><kbd>1</kbd> today</button>
-              <button data-sort="week" aria-pressed="false"><kbd>2</kbd> week</button>
-              <button data-sort="streak" aria-pressed="false"><kbd>3</kbd> streak</button>
-              <button data-sort="xp" aria-pressed="false"><kbd>4</kbd> xp</button>
-            </div>
-          </div>
-          <p id="you" class="you" hidden></p>
-          <table id="board" class="board">
-            <caption class="sr-only">Developers ranked by focus time</caption>
-            <thead><tr><th scope="col">#</th><th scope="col">dev</th><th scope="col" class="bar-col"><span class="sr-only">relative</span></th><th scope="col" id="metric-h" class="num">today</th><th scope="col" class="lvl">level</th><th scope="col" class="num combo-col">combo</th></tr></thead>
-            <tbody id="rows"></tbody>
-          </table>
-          <p id="empty" class="empty" hidden></p>
-        </section>
-
-        <section aria-labelledby="feed-h" class="feed-wrap">
-          <h2 id="feed-h" class="rule"><span>tail -f feed.log</span></h2>
-          <ol id="feed" class="feed" aria-live="polite" aria-relevant="additions"></ol>
-        </section>
+  <main>
+    <!-- ======================================================== hero -->
+    <section class="hero grain" aria-labelledby="title">
+      <p class="ghost" aria-hidden="true" id="ghost">global</p>
+      <p class="eyebrow">Room / <span id="room-name">global</span></p>
+      <h1 id="title" class="display">Focus,<br>together.</h1>
+      <p class="lede">Every session, every streak, every developer in the room. Updated the moment it happens.</p>
+      <p class="prompt"><span class="ps">$</span> <span id="cmd"></span><span class="cursor" aria-hidden="true"></span></p>
+      <p id="status-line" class="caption"></p>
+      <p id="demo-banner" class="banner" hidden></p>
+      <div class="actions">
+        <a class="btn btn-primary" href="#join-h">Join the board</a>
+        <a class="btn btn-ghost" href="https://github.com/kimathikim/promo">View on GitHub</a>
       </div>
 
-      <section aria-labelledby="join-h" class="join">
-        <h2 id="join-h" class="rule"><span>join in 30 seconds</span></h2>
-        <ol class="steps">
-          <li><span class="muted"># 1. get promo (Python 3.7+)</span>
-            <pre><code id="install">pip install rich
+      <dl class="g stats" aria-label="Totals today">
+        <div class="gc"><dt>Focused today</dt><dd id="total-today">—</dd></div>
+        <div class="gc"><dt>Developers</dt><dd id="total-devs">—</dd></div>
+        <div class="gc"><dt>Focusing now</dt><dd id="total-now">—</dd></div>
+        <div class="gc"><dt>Hottest combo</dt><dd id="total-combo">—</dd></div>
+      </dl>
+    </section>
+
+    <!-- ======================================================== right now -->
+    <section class="band" aria-labelledby="now-h">
+      <div class="band-head">
+        <h2 id="now-h" class="h2">Right now</h2>
+        <p class="caption">Live timers. Updated every second.</p>
+      </div>
+      <ul id="now" class="g now"></ul>
+    </section>
+
+    <!-- ======================================================== leaderboard -->
+    <section class="band paper" data-surface="white" aria-labelledby="board-h">
+      <div class="band-head">
+        <h2 id="board-h" class="h2">Leaderboard</h2>
+        <div class="toolbar">
+          <div class="tabs" role="group" aria-label="Sort leaderboard by">
+            <button data-sort="today" aria-pressed="true"><kbd>1</kbd> Today</button>
+            <button data-sort="week" aria-pressed="false"><kbd>2</kbd> Week</button>
+            <button data-sort="streak" aria-pressed="false"><kbd>3</kbd> Streak</button>
+            <button data-sort="xp" aria-pressed="false"><kbd>4</kbd> XP</button>
+          </div>
+          <label class="filter" id="filter-wrap" hidden><span class="caption" id="mode">Filter</span><input id="filter" type="search" placeholder="name" aria-label="Filter developers"></label>
+        </div>
+      </div>
+      <p id="you" class="you" hidden></p>
+      <div class="table-wrap">
+        <table id="board" class="board">
+          <caption class="sr-only">Developers ranked</caption>
+          <thead><tr><th scope="col">Rank</th><th scope="col">Developer</th><th scope="col" class="bar-col"><span class="sr-only">Relative</span></th><th scope="col" id="metric-h" class="num">Today</th><th scope="col" class="lvl">Level</th><th scope="col" class="num combo-col">Combo</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p id="empty" class="empty" hidden></p>
+      <p class="keys caption"><kbd>1–4</kbd> sort <kbd>J</kbd><kbd>K</kbd> move <kbd>Enter</kbd> expand <kbd>M</kbd> that's me <kbd>/</kbd> filter <kbd>?</kbd> help <span id="updated" class="updated"></span></p>
+    </section>
+
+    <!-- ======================================================== feed -->
+    <section class="band grain" aria-labelledby="feed-h">
+      <div class="band-head">
+        <h2 id="feed-h" class="h2">The feed</h2>
+        <p class="caption">tail -f feed.log</p>
+      </div>
+      <ol id="feed" class="feed" aria-live="polite" aria-relevant="additions"></ol>
+    </section>
+
+    <!-- ======================================================== join -->
+    <section class="band paper" data-surface="white" aria-labelledby="join-h">
+      <div class="band-head">
+        <h2 id="join-h" class="h2">Join in thirty seconds</h2>
+        <p class="caption">Opt-in. Free. Open source.</p>
+      </div>
+      <ol class="g steps">
+        <li class="gc">
+          <span class="step-n" aria-hidden="true">01</span>
+          <h3 class="h4">Get promo</h3>
+          <p>One Python file and the <code>rich</code> library. Nothing else to install.</p>
+          <pre><code id="install">pip install rich
 curl -fsSL https://raw.githubusercontent.com/kimathikim/promo/main/promo.py -o ~/.local/bin/promo
 chmod +x ~/.local/bin/promo</code></pre>
-            <button class="copy" data-copy="install">copy</button></li>
-          <li><span class="muted"># 2. join this leaderboard</span>
-            <pre><code id="join-cmd"></code></pre>
-            <button class="copy" data-copy="join-cmd">copy</button></li>
-          <li><span class="muted"># 3. focus</span>
-            <pre><code>promo 25 "ship the thing"</code></pre></li>
-        </ol>
-        <p class="privacy muted">Opt-in only. Shared: your name, current phase and time left, focus minutes, streak, XP, level and wins. Never shared: notes, code, commit messages, file names. Task and repo only with <code>share_task = true</code>.</p>
-      </section>
-    </div>
-
-    <footer class="statusbar" aria-label="Keyboard shortcuts">
-      <span class="mode" id="mode">NORMAL</span>
-      <span class="keys"><kbd>1-4</kbd> sort <kbd>j</kbd><kbd>k</kbd> move <kbd>/</kbd> filter <kbd>m</kbd> that's me <kbd>?</kbd> help</span>
-      <label class="filter" id="filter-wrap" hidden><span aria-hidden="true">/</span><input id="filter" type="search" placeholder="filter devs" aria-label="Filter developers"></label>
-      <span class="right" id="updated"></span>
-    </footer>
+          <button class="btn btn-sm copy" data-copy="install">Copy</button>
+        </li>
+        <li class="gc">
+          <span class="step-n" aria-hidden="true">02</span>
+          <h3 class="h4">Join this room</h3>
+          <p>Claims your name and links your timer to this board.</p>
+          <pre><code id="join-cmd"></code></pre>
+          <button class="btn btn-sm copy" data-copy="join-cmd">Copy</button>
+        </li>
+        <li class="gc">
+          <span class="step-n" aria-hidden="true">03</span>
+          <h3 class="h4">Start focusing</h3>
+          <p>Your next session appears here within a minute.</p>
+          <pre><code>promo 25 "ship the thing"</code></pre>
+        </li>
+      </ol>
+      <p class="privacy">Shared: your name, current phase and time left, focus minutes, streak, XP, level and wins. Never shared: notes, code, commit messages or file names. Task and repo only with <code>share_task = true</code>.</p>
+    </section>
   </main>
 
-  <dialog id="help" aria-labelledby="help-h">
-    <h2 id="help-h">:help promo</h2>
+  <footer class="foot grain">
+    <p class="wordmark" aria-hidden="true">Promo</p>
+    <div class="foot-row">
+      <p class="caption">The progressive Pomodoro timer for developers</p>
+      <nav aria-label="Footer">
+        <a href="https://github.com/kimathikim/promo">GitHub</a>
+        <a href="https://github.com/kimathikim/promo#readme">Docs</a>
+        <a href="/r/global">Global room</a>
+      </nav>
+      <p class="caption">MIT License</p>
+    </div>
+  </footer>
+
+  <dialog id="help" data-surface="white" aria-labelledby="help-h">
+    <h2 id="help-h" class="h4">Keyboard</h2>
     <dl>
-      <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>sort by today, week, streak, xp</dd>
-      <dt><kbd>j</kbd> / <kbd>k</kbd></dt><dd>move the cursor down / up</dd>
-      <dt><kbd>g</kbd> / <kbd>G</kbd></dt><dd>jump to top / bottom</dd>
-      <dt><kbd>enter</kbd></dt><dd>expand the selected dev</dd>
-      <dt><kbd>m</kbd></dt><dd>mark the selected dev as you</dd>
-      <dt><kbd>/</kbd></dt><dd>filter by name, <kbd>esc</kbd> to clear</dd>
-      <dt><kbd>?</kbd></dt><dd>this help</dd>
+      <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Sort by today, week, streak, XP</dd>
+      <dt><kbd>J</kbd> / <kbd>K</kbd></dt><dd>Move down / up</dd>
+      <dt><kbd>G</kbd> / <kbd>⇧G</kbd></dt><dd>Top / bottom</dd>
+      <dt><kbd>Enter</kbd></dt><dd>Expand the selected developer</dd>
+      <dt><kbd>M</kbd></dt><dd>Mark the selected developer as you</dd>
+      <dt><kbd>/</kbd></dt><dd>Filter by name, <kbd>Esc</kbd> to clear</dd>
     </dl>
-    <p class="muted">Private squad? Open <code>/r/your-room</code>.</p>
-    <form method="dialog"><button>:q</button></form>
+    <p class="caption">Private squad? Open <code>/r/your-room</code>.</p>
+    <form method="dialog"><button class="btn btn-sm btn-primary">Close</button></form>
   </dialog>
 </body>
 </html>

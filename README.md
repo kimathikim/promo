@@ -48,7 +48,7 @@ It's made for people who live in the terminal: it knows which git repo and branc
 - `promo join alice`: sync your timer to a teammate's session and focus together.
 - `promo card`: an SVG stats card for your GitHub profile README.
 - Self-hosted with zero dependencies: one person runs `promo serve` and everyone else adds one line to their config.
-- **A public web leaderboard** (`public/` + `api/`, deploys to Vercel): see who's focusing right now, rankings by today, week, streak or XP, and a live feed. It looks and works like a terminal.
+- **A public web leaderboard** (`public/` + `api/`, deploys to Vercel): see who's focusing right now, rankings by today, week, streak or XP, and a live feed. It's keyboard-driven, in the style of the Hermes Agent site.
 
 ![Details view](docs/details.png)
 
@@ -237,7 +237,11 @@ sound = false                         ; turn chimes off
 
 ![Web leaderboard](docs/leaderboard.png)
 
-A terminal-styled, keyboard-driven leaderboard lives in this repo:
+![Leaderboard table](docs/leaderboard-board.png)
+
+The design follows the [Hermes Agent](https://hermes-agent.nousresearch.com/) landing page by Nous Research: electric blue and white paper surfaces, an acid-yellow accent, light serif capitals for display, tracked grotesk labels and hairline grids. The fonts are self-hosted open-licence stand-ins (Newsreader, Archivo, Courier Prime; see `public/fonts/LICENSE.md`) for Hermes' licensed Sigurd and Rules families.
+
+A keyboard-driven leaderboard lives in this repo:
 - `public/` is a static page with no framework or build step.
 - `api/squad.js` is a serverless API that speaks the same protocol as `promo serve`, so the CLI needs nothing new.
 
