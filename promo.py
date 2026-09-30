@@ -13,6 +13,7 @@ actually focused, and a long break is due after a configurable amount of focus.
 import argparse
 import configparser
 import csv
+import hashlib
 import hmac
 import html
 import http.server
@@ -875,15 +876,17 @@ class UI:
             grid.add_row("notes", f"{s.notes} captured (see summary)")
         if app.squad and app.squad.snap:
             board = Text()
-            for i, m in enumerate(app.squad.snap["members"][:5], 1):
+            now = time.time()
+            ranked = sorted(((m, fresh_stats(m, now)) for m in app.squad.snap["members"]),
+                            key=lambda ms: -ms[1].get("today_min", 0))
+            for i, (m, st) in enumerate(ranked[:5], 1):
                 if i > 1:
                     board.append("\n")
                 me = m["name"] == app.squad.client.name
                 board.append(f"{i}. ", style=MUTED)
                 board.append(f"{m['name']:<14}", style="bold" if me else "")
-                board.append(f"{fmt_minutes(m['stats'].get('today_min', 0)):>7}")
-                board.append(f"  {m['stats'].get('streak', 0)}d  "
-                             f"{m['stats'].get('level', '')}", style=MUTED)
+                board.append(f"{fmt_minutes(st.get('today_min', 0)):>7}")
+                board.append(f"  {st.get('streak', 0)}d  {st.get('level', '')}", style=MUTED)
             grid.add_row("squad today", board)
         if app.progress:
             _, title, into, span = app.progress.level
@@ -1481,11 +1484,36 @@ def _clean_state(st) -> Optional[dict]:
 
 def _clean_stats(st) -> dict:
     st = st if isinstance(st, dict) else {}
-    out = {k: _clip(st.get(k), float, 1e7) for k in ("today_min", "week_min")}
+    out = {"today_min": _clip(st.get("today_min"), float, 1440),  # nobody does 25h days
+           "week_min": _clip(st.get("week_min"), float, 10080)}
     out.update({k: _clip(st.get(k), int, 10 ** 7)
                 for k in ("streak", "xp", "sessions", "best_combo")})
     out["level"] = st.get("level") if st.get("level") in TITLES else TITLES[0]
+    out["day"] = st.get("day") if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(st.get("day"))) else ""
+    out["week"] = st.get("week") if re.fullmatch(r"\d{4}-W\d{2}", str(st.get("week"))) else ""
     return out
+
+
+def fresh_stats(m: dict, now: float) -> dict:
+    """Stats with stale periods zeroed: yesterday's 'today' must not keep
+    someone on top (same rules as the web leaderboard)."""
+    st = dict(m.get("stats") or {})
+    seen = now - (m.get("last_seen") or 0)
+    today = date.today()
+    try:
+        day_gap = abs((date.fromisoformat(st.get("day", "")) - today).days)
+    except ValueError:
+        day_gap = None
+    if not (day_gap == 0 or (day_gap is not None and day_gap <= 1 and seen < 43200)
+            or (day_gap is None and seen < 86400)):
+        st["today_min"] = 0
+    iso = today.isocalendar()
+    if not (st.get("week") == f"{iso[0]}-W{iso[1]:02d}" or seen < 86400
+            or (not st.get("week") and seen < 604800)):
+        st["week_min"] = 0
+    if seen >= 172800:
+        st["streak"] = 0
+    return st
 
 
 def _clean_event(ev) -> Optional[dict]:
@@ -1551,7 +1579,7 @@ class SquadStore:
             now = time.time()
             members = []
             for m in room["members"].values():
-                online = now - m.get("last_seen", 0) < ONLINE_SECONDS
+                online = not m.get("offline") and now - m.get("last_seen", 0) < ONLINE_SECONDS
                 members.append({"name": m["name"], "online": online,
                                 "last_seen": m.get("last_seen", 0),
                                 "state": m.get("state") if online else None,
@@ -1559,16 +1587,28 @@ class SquadStore:
             members.sort(key=lambda m: -m["stats"].get("today_min", 0))
             events = [e for e in room["events"] if e["seq"] > since][-50:]
             return {"room": room_name, "now": now, "cursor": room["seq"],
-                    "members": members, "events": events}
+                    "heartbeat": HEARTBEAT_SECONDS, "members": members, "events": events}
 
-    def heartbeat(self, room_name: str, body: dict) -> dict:
+    @staticmethod
+    def _claim(member: dict, key: str) -> None:
+        """The first client to use a name owns it; later writes need its key."""
+        digest = hashlib.sha256(key.encode()).hexdigest() if key else ""
+        if member.get("key") and not hmac.compare_digest(member["key"], digest):
+            raise PermissionError(f"the name {member['name']!r} is taken in this room")
+        if digest:
+            member["key"] = digest
+
+    def heartbeat(self, room_name: str, body: dict, key: str = "") -> dict:
         name = body.get("name", "")
         if not NAME_RE.fullmatch(str(name)):
             raise ValueError("invalid name")
         with self.lock:
             room = self._room(room_name)
-            member = room["members"].setdefault(name, {"name": name})
-            member["last_seen"] = 0 if body.get("offline") else time.time()
+            member = room["members"].get(name, {"name": name})
+            self._claim(member, key)
+            room["members"][name] = member
+            member["last_seen"] = time.time()
+            member["offline"] = bool(body.get("offline"))
             member["state"] = _clean_state(body.get("state"))
             if "stats" in body:
                 member["stats"] = _clean_stats(body.get("stats"))
@@ -1576,11 +1616,14 @@ class SquadStore:
             self._save(force=added)
         return self.snapshot(room_name, _clip(body.get("since"), int, 10 ** 12))
 
-    def post_events(self, room_name: str, body: dict) -> dict:
+    def post_events(self, room_name: str, body: dict, key: str = "") -> dict:
         name = body.get("name", "")
         if not NAME_RE.fullmatch(str(name)):
             raise ValueError("invalid name")
         with self.lock:
+            member = self._room(room_name)["members"].get(name)
+            if member:
+                self._claim(member, key)
             if self._add_events(self._room(room_name), name, body.get("events")):
                 self._save(force=True)
         return {"ok": True}
@@ -1723,8 +1766,11 @@ def make_squad_handler(store: SquadStore, token: str):
                 body = json.loads(self.rfile.read(length))
                 if not isinstance(body, dict):
                     raise ValueError("expected an object")
-                result = (store.heartbeat(room, body) if action == "heartbeat"
-                          else store.post_events(room, body))
+                key = self.headers.get("X-Promo-Key", "")
+                result = (store.heartbeat(room, body, key) if action == "heartbeat"
+                          else store.post_events(room, body, key))
+            except PermissionError as e:
+                return self._send(403, {"error": str(e)})
             except ValueError as e:
                 return self._send(400, {"error": str(e)})
             self._send(200, result)
@@ -1767,15 +1813,38 @@ def cmd_serve(argv: List[str]) -> None:
             store._save(force=True)
 
 
+def member_key() -> str:
+    """Random per-install secret that proves you own your squad name."""
+    path = os.path.join(DATA_DIR, "member.key")
+    try:
+        with open(path) as f:
+            key = f.read().strip()
+        if key:
+            return key
+    except OSError:
+        pass
+    key = os.urandom(24).hex()
+    try:
+        ensure_dir(path)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
+            f.write(key)
+    except OSError:
+        pass
+    return key
+
+
 class SquadClient:
     def __init__(self, url: str, token: str, name: str):
         self.base, self.token, self.name = url.rstrip("/"), token, name
+        self.key = member_key()
 
     def request(self, path: str, body: Optional[dict] = None, timeout: float = 4) -> dict:
         req = urllib.request.Request(
             self.base + path, method="POST" if body is not None else "GET",
             data=json.dumps(body).encode() if body is not None else None,
             headers={"Content-Type": "application/json", "User-Agent": "promo",
+                     "X-Promo-Key": self.key,
                      **({"Authorization": f"Bearer {self.token}"} if self.token else {})})
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -1862,7 +1931,8 @@ class SquadSync(threading.Thread):
     def run(self) -> None:
         while not self._stopping:
             self.beat()
-            self.wake.wait(HEARTBEAT_SECONDS)
+            interval = (self.snap or {}).get("heartbeat", HEARTBEAT_SECONDS)
+            self.wake.wait(max(10, min(600, _clip(interval, int, 600))))
             self.wake.clear()
 
     def stop(self) -> None:
@@ -1885,13 +1955,64 @@ def squad_stats(rows: List[dict], progress: Optional[Progress]) -> dict:
     out = {"today_min": round(by_day.get(today, 0), 1),
            "week_min": round(sum(v for d, v in by_day.items() if d >= week_start), 1),
            "streak": current_streak(by_day),
-           "sessions": sum(1 for r in rows if r.get("phase") == "focus")}
+           "sessions": sum(1 for r in rows if r.get("phase") == "focus"),
+           "day": today.isoformat(),
+           "week": "{}-W{:02d}".format(*today.isocalendar()[:2])}
     if progress:
         out.update(xp=progress.xp, level=progress.level[1], best_combo=progress.best_combo)
     return out
 
 
+def cmd_squad_join(argv: List[str]) -> int:
+    """`promo squad join URL [--name N] [--token T]`: write the squad config."""
+    p = argparse.ArgumentParser(prog="promo squad join",
+                                description="Join a squad room or the public leaderboard.")
+    p.add_argument("url", help="room URL, e.g. https://promo-leaderboard.vercel.app/r/global")
+    p.add_argument("--name", help="your name on the board (default: git user.name)")
+    p.add_argument("--token", default="", help="token for a private room")
+    args = p.parse_args(argv)
+    url = args.url.rstrip("/")
+    if not re.match(r"https?://[^/]+/r/[A-Za-z0-9_.-]{1,40}$", url):
+        if re.match(r"https?://[^/]+$", url):
+            url += "/r/global"
+        else:
+            p.error("expected a room URL like https://host/r/room")
+    values = {"squad": url, "squad_name": clean_name(args.name or default_squad_name(load_config()))}
+    if args.token:
+        values["squad_token"] = args.token
+    try:
+        with open(CONFIG_PATH) as f:
+            lines = f.read().splitlines()
+    except OSError:
+        lines = []
+    if not any(line.strip() == "[promo]" for line in lines):
+        lines = ["[promo]"] + lines
+    for key, value in values.items():
+        pattern = re.compile(rf"^\s*{key}\s*=")
+        hit = [i for i, line in enumerate(lines) if pattern.match(line)]
+        if hit:
+            lines[hit[0]] = f"{key} = {value}"
+        else:
+            lines.insert(lines.index("[promo]") + 1, f"{key} = {value}")
+    ensure_dir(CONFIG_PATH)
+    with open(CONFIG_PATH, "w") as f:
+        f.write("\n".join(lines) + "\n")
+    cfg = load_config()
+    client = squad_client(cfg)
+    rows = Log(cfg.get("log", os.path.join(DATA_DIR, "sessions.csv"))).rows()
+    try:
+        client.request("/api/heartbeat", {"name": client.name, "state": None,
+                                          "stats": squad_stats(rows, replay(rows))})
+    except OSError as e:
+        print(f"saved to {tilde(CONFIG_PATH)}, but the server said: {e}", file=sys.stderr)
+        return 1
+    print(f"✓ joined {url} as {client.name}. Your next `promo` session shows up on the board.")
+    return 0
+
+
 def cmd_squad(argv: List[str]) -> int:
+    if argv and argv[0] == "join":
+        return cmd_squad_join(argv[1:])
     cfg = load_config()
     p = argparse.ArgumentParser(prog="promo squad", description="Your squad's leaderboard.")
     p.add_argument("--watch", action="store_true", help="refresh every 5 seconds")
@@ -1912,8 +2033,9 @@ def cmd_squad(argv: List[str]) -> int:
                         ("week", {"justify": "right"}), ("streak", {"justify": "right"}),
                         ("level", {}), ("best combo", {"justify": "right"})):
             board.add_column(col, **kw)
-        for i, m in enumerate(snap["members"], 1):
-            st = m["stats"]
+        members = sorted(snap["members"], key=lambda m: -fresh_stats(m, now).get("today_min", 0))
+        for i, m in enumerate(members, 1):
+            st = fresh_stats(m, now)
             name = Text(m["name"], style="bold" if m["name"] == client.name else "")
             if m["online"]:
                 name.append(" ●", style=PHASES["focus"][1])

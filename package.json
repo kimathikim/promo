@@ -1,0 +1,11 @@
+{
+  "name": "promo-leaderboard",
+  "private": true,
+  "description": "Live web leaderboard for promo (Vercel: static site + squad API)",
+  "scripts": {
+    "dev": "node scripts/dev.js 3000"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -48,6 +48,7 @@ It's made for people who live in the terminal: it knows which git repo and branc
 - `promo join alice`: sync your timer to a teammate's session and focus together.
 - `promo card`: an SVG stats card for your GitHub profile README.
 - Self-hosted with zero dependencies: one person runs `promo serve` and everyone else adds one line to their config.
+- **A public web leaderboard** (`public/` + `api/`, deploys to Vercel): see who's focusing right now, rankings by today, week, streak or XP, and a live feed. It looks and works like a terminal.
 
 ![Details view](docs/details.png)
 
@@ -183,7 +184,7 @@ promo serve --host 0.0.0.0 --port 8787 --token "$(openssl rand -hex 16)"
 
 A server can hold any number of rooms. A room is created the first time someone joins it.
 
-**2. Everyone adds the room** to `~/.config/promo/config.ini`:
+**2. Everyone joins the room**: `promo squad join http://your-server:8787/r/night-shift --token <the token>`, or add it to `~/.config/promo/config.ini` by hand:
 
 ```ini
 [promo]
@@ -231,6 +232,42 @@ sound_repeat = 2                      ; ring the end-of-phase chime twice
 sound_focus_end = ~/sounds/gong.ogg   ; your own file for any sound
 sound = false                         ; turn chimes off
 ```
+
+### Web leaderboard
+
+![Web leaderboard](docs/leaderboard.png)
+
+A terminal-styled, keyboard-driven leaderboard lives in this repo:
+- `public/` is a static page with no framework or build step.
+- `api/squad.js` is a serverless API that speaks the same protocol as `promo serve`, so the CLI needs nothing new.
+
+**What it shows:**
+- who's focusing right now, with live countdowns
+- totals across the room
+- rankings by today, week, streak or XP, with ▲▼ rank changes
+- a gap line when you mark yourself ("22m behind bob")
+- a live feed of finished sessions, achievements, level-ups and kudos
+
+**Keys:** `1`–`4` sort, `j`/`k` move, `enter` expand, `m` "that's me", `/` filter, `?` help. `/r/<room>` shows a private squad.
+
+**Deploy it (about 3 minutes, free tiers):**
+1. On [vercel.com/new](https://vercel.com/new), import `kimathikim/promo`. There's no build step, and `vercel.json` already routes everything.
+2. In the project, open **Storage → Marketplace → Upstash (Redis)**, create a database and connect it. Vercel adds `KV_REST_API_URL` and `KV_REST_API_TOKEN` for you.
+3. Redeploy. Your leaderboard is at `https://<project>.vercel.app`, and the global room is at `/r/global`.
+
+**Join from the terminal:**
+
+```sh
+promo squad join https://<project>.vercel.app --name yourname
+```
+
+**Good to know:**
+- Names are first come, first served. Each install has a secret key (`~/.local/share/promo/member.key`), so nobody else can post under your name.
+- Stats are self-reported, but capped at what's physically possible (24h a day).
+- "Today" and "week" expire with the calendar.
+- For private rooms, set `PROMO_PRIVATE_ROOMS="team-a:secret1,team-b:secret2"` in the Vercel env. Members then pass `--token`, and the page is opened as `/r/team-a?key=secret1`.
+- To keep Redis usage low, the API asks timers to check in every 2 minutes (or immediately on pause, skip and so on), and the CDN caches the board for 5 s.
+- Run it locally with `node scripts/dev.js` (in-memory storage) and open http://localhost:3000.
 
 ### Config file
 
@@ -280,6 +317,7 @@ status_format = {icon} {time}
 | `~/.cache/promo/state.json` | the running timer, read by `promo status` and the Neovim plugin |
 | `~/.cache/promo/control` | named pipe the running timer listens on for remote commands |
 | `~/.local/share/promo/squad.json` | rooms and feeds, on the machine running `promo serve` |
+| `~/.local/share/promo/member.key` | secret that proves you own your squad name (keep it private) |
 
 `XDG_DATA_HOME`, `XDG_CACHE_HOME` and `XDG_CONFIG_HOME` are respected. Use `--log` / `--notes` to use other paths.
 
