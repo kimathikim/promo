@@ -1,0 +1,8 @@
+# The Vercel project is only the web leaderboard (public/ + api/). Keep the
+# Python CLI out of the deployment so Vercel doesn't detect a Python app.
+promo.py
+requirements.txt
+lua
+mini.lua
+docs
+scripts

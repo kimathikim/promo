@@ -6,6 +6,6 @@
     "dev": "node scripts/dev.js 3000"
   },
   "engines": {
-    "node": ">=18"
+    "node": "22.x"
   }
 }
