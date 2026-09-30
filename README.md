@@ -28,7 +28,7 @@ It's made for people who live in the terminal: it knows which git repo and branc
 - **`promo stats`**: a GitHub-style focus heatmap, streaks, week-over-week trend, a focus-level breakdown, your peak hour of the day, and time per project.
 - **`promo status`**: a one-line status for tmux, waybar, polybar or your shell prompt.
 - **Hooks**: run your own command when a session starts or ends, e.g. to turn on Do Not Disturb or set your Slack status.
-- Desktop notifications (`notify-send` on Linux, `osascript` on macOS) plus the terminal bell.
+- **Sound**: a chime when focus ends, a different one when your break is over, and a soft one for kudos. Swap in your own files if you like. There are also desktop notifications (`notify-send` on Linux, `osascript` on macOS) and the terminal bell.
 
 **Never leave the keyboard**
 - **Remote control**: `promo toggle`, `promo skip`, `promo add 10`, `promo note "..."` work from any shell, so you can bind them in tmux or your window manager. Commands reach the timer instantly.
@@ -40,6 +40,14 @@ It's made for people who live in the terminal: it knows which git repo and branc
 - Rate Focused or Flow in a row to build a 🔥 combo that boosts your XP.
 - Unlock achievements like *Deep Work*, *C-C-C-Combo*, *Ship It* and *Night Owl*.
 - Optional `--spicy` mode adds commentary: "45m and 0 commits… skill issue?", "go touch grass 🌱".
+
+**Focus with your squad**
+- See who's focusing right now, right under your clock: `👥 alice 🍅 12m · bob ☕ 3m`.
+- A squad leaderboard (today, week, streak, level) in the details view, in `promo squad`, and on a web dashboard.
+- A live feed of finished sessions, level-ups and achievements, plus 🔥 kudos. It's all held until your break, so nothing interrupts focus.
+- `promo join alice`: sync your timer to a teammate's session and focus together.
+- `promo card`: an SVG stats card for your GitHub profile README.
+- Self-hosted with zero dependencies: one person runs `promo serve` and everyone else adds one line to their config.
 
 ![Details view](docs/details.png)
 
@@ -165,6 +173,65 @@ case "$PROMO_EVENT" in
 esac
 ```
 
+### Squad
+
+**1. Someone runs a server** on any machine the squad can reach: a small VPS, a Raspberry Pi, or a laptop on [Tailscale](https://tailscale.com/).
+
+```sh
+promo serve --host 0.0.0.0 --port 8787 --token "$(openssl rand -hex 16)"
+```
+
+A server can hold any number of rooms. A room is created the first time someone joins it.
+
+**2. Everyone adds the room** to `~/.config/promo/config.ini`:
+
+```ini
+[promo]
+squad = http://your-server:8787/r/night-shift
+squad_token = <the token>
+squad_name = alice        ; defaults to your git user.name
+share_task = false        ; true shares your task and repo name with the squad
+```
+
+**3. Use it**
+
+```sh
+promo                       # your timer now shows who else is focusing
+promo squad                 # leaderboard + feed   (--watch to keep it live)
+promo join alice            # focus with alice: your session ends when hers does
+promo kudos bob             # send bob a 🔥 (he sees it on his next break)
+promo card -o promo.svg     # stats card for your README
+```
+
+Inside the timer, `:kudos bob` sends kudos, and `i` shows the squad leaderboard. The web dashboard is at `http://your-server:8787/r/night-shift?key=<token>`. It auto-refreshes, so it works well on a spare screen.
+
+**What gets shared:**
+- Your name, your current phase and time left.
+- Today's and this week's focus minutes, streak, XP, level and best combo.
+- Events: finished sessions, achievements, level-ups and kudos.
+
+Your task and repo name are shared only with `share_task = true`. Notes, commit messages and file names never leave your machine. The server is plain HTTP, so put it behind HTTPS (Caddy, nginx) or a private network like Tailscale if it's reachable from the internet. Stats are self-reported, so squads work best with people you trust.
+
+![promo card](docs/card.png)
+
+### Sound
+
+Every phase ends with a chime, played by an audio player you already have (`pw-play`, `paplay`, `aplay` or `ffplay` on Linux, `afplay` on macOS, built in on Windows). The chimes are generated on first use, so there's nothing to download.
+
+```sh
+promo sound               # preview every sound and see which player is used
+promo sound focus_end     # just one: focus_end, break_end, long_break_end, kudos
+promo --no-sound          # silent run
+```
+
+```ini
+[promo]
+volume = 0.7                          ; 0 to 1
+sound_repeat = 2                      ; ring the end-of-phase chime twice
+sound_focus_end = ~/sounds/gong.ogg   ; your own file for any sound
+sound = false                         ; turn chimes off
+```
+
 ### Config file
 
 Defaults can be set in `~/.config/promo/config.ini`; command-line flags override them.
@@ -176,6 +243,8 @@ goal = 240                ; daily focus goal in minutes (0 = off)
 long_break_after = 180
 hook = ~/bin/promo-dnd
 bell = true
+sound = true              ; chimes (see Sound above)
+volume = 0.7
 git = true
 title = true
 game = true               ; XP, levels, combos, achievements
@@ -210,6 +279,7 @@ status_format = {icon} {time}
 | `~/.local/share/promo/notes.md` | notes captured with `n` |
 | `~/.cache/promo/state.json` | the running timer, read by `promo status` and the Neovim plugin |
 | `~/.cache/promo/control` | named pipe the running timer listens on for remote commands |
+| `~/.local/share/promo/squad.json` | rooms and feeds, on the machine running `promo serve` |
 
 `XDG_DATA_HOME`, `XDG_CACHE_HOME` and `XDG_CONFIG_HOME` are respected. Use `--log` / `--notes` to use other paths.
 
