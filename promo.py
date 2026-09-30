@@ -1663,14 +1663,14 @@ def member_badge(m: dict, now: float) -> str:
 
 DASHBOARD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="15"><meta name="theme-color" content="#0000f2">
+<meta http-equiv="refresh" content="15"><meta name="theme-color" content="#141110">
 <title>promo · {room}</title>
 <style>
-:root{{--blue:#0000f2;--white:#f5f5f5;--fg2:#b8b8f4;--line:rgba(245,245,245,.2);--accent:#edff45}}
+:root{{--tomato:#c4361c;--ink:#141110;--cream:#fff4e6;--fg2:#c9bfb3;--line:rgba(255,244,230,.16);--leaf:#9be564}}
 *{{box-sizing:border-box}}
-body{{margin:0;background:var(--blue);color:var(--white);
+body{{margin:0;background:var(--ink);color:var(--cream);
 font:16px/1.7 "Archivo","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}}
-::selection{{background:var(--accent);color:var(--blue)}}
+::selection{{background:var(--leaf);color:var(--ink)}}
 main{{max-width:1100px;margin:auto;padding:56px 24px}}
 h1,h2{{font-family:"Newsreader","Times New Roman",Georgia,serif;font-weight:300;
 text-transform:uppercase;letter-spacing:.03em;margin:0}}
@@ -1683,10 +1683,11 @@ th,td{{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line)}}
 td{{font-weight:600;text-transform:uppercase;letter-spacing:.06em}}
 .num{{text-align:right;font-family:"Newsreader","Times New Roman",Georgia,serif;font-weight:300;
 font-size:22px;letter-spacing:.02em;text-transform:none}}
-.rank{{font-family:"Newsreader","Times New Roman",Georgia,serif;font-weight:300;font-size:28px;color:var(--white)}}
+.rank{{font-family:"Newsreader","Times New Roman",Georgia,serif;font-weight:300;font-size:28px;color:var(--cream)}}
+h1{{color:var(--tomato)}}
 .lvl{{font:400 13px "Courier Prime","Courier New",monospace;color:var(--fg2);letter-spacing:.08em}}
-.on{{display:inline-block;width:8px;height:8px;margin-left:8px;background:var(--accent)}}
-.now{{font-size:20px}}.now b{{color:var(--accent);font-weight:600}}
+.on{{display:inline-block;width:8px;height:8px;margin-left:8px;background:var(--leaf)}}
+.now{{font-size:20px}}.now b{{color:var(--leaf);font-weight:600}}
 ul{{list-style:none;margin:0;padding:0;font:15px/1.6 "Courier Prime","Courier New",monospace}}
 li{{padding:10px 0;border-bottom:1px solid var(--line)}}li time{{color:var(--fg2);margin-right:16px}}
 code{{font-family:"Courier Prime","Courier New",monospace}}
@@ -2313,9 +2314,9 @@ def cmd_card(argv: List[str]) -> int:
     esc = html.escape
     weeks = 17
     start = today - timedelta(days=today.weekday()) - timedelta(weeks=weeks - 1)
-    # white at rising opacity on blue, acid for the biggest days
-    heat = ["rgba(245,245,245,0.12)", "rgba(245,245,245,0.35)", "rgba(245,245,245,0.6)",
-            "#f5f5f5", "#edff45"]
+    # one hue rising in brightness (colour-blind safe): ink -> tomato -> cream
+    heat = ["rgba(255,244,230,0.07)", "rgba(196,54,28,0.4)", "rgba(196,54,28,0.7)",
+            "#c4361c", "#ffb59e"]
     cells = []
     for w in range(weeks):
         for wd in range(7):
@@ -2337,20 +2338,20 @@ def cmd_card(argv: List[str]) -> int:
     mono = "'Courier Prime','Courier New',monospace"
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="480" height="230" viewBox="0 0 480 230">
 <style>
-.e{{font:400 10px {mono};letter-spacing:.1em;fill:#b8b8f4;text-transform:uppercase}}
-.d{{font:300 28px {serif};letter-spacing:.03em;fill:#f5f5f5;text-transform:uppercase}}
-.k{{font:500 10px {sans};letter-spacing:.1em;fill:#b8b8f4;text-transform:uppercase}}
-.v{{font:300 14px {serif};letter-spacing:.02em;fill:#f5f5f5}}
-.x{{font:400 10px {mono};letter-spacing:.08em;fill:#edff45}}
+.e{{font:400 10px {mono};letter-spacing:.1em;fill:#c9bfb3;text-transform:uppercase}}
+.d{{font:300 28px {serif};letter-spacing:.03em;fill:#fff4e6;text-transform:uppercase}}
+.k{{font:500 10px {sans};letter-spacing:.1em;fill:#c9bfb3;text-transform:uppercase}}
+.v{{font:300 14px {serif};letter-spacing:.02em;fill:#fff4e6}}
+.x{{font:400 10px {mono};letter-spacing:.08em;fill:#9be564}}
 </style>
-<rect width="480" height="230" fill="#0000f2"/>
-<rect x="0.5" y="0.5" width="479" height="229" fill="none" stroke="rgba(245,245,245,0.2)"/>
+<rect width="480" height="230" fill="#141110"/>
+<rect width="480" height="4" fill="#c4361c"/>
 <text x="24" y="32" class="e">PROMO / {esc(args.name.upper())}</text>
 <text x="24" y="76" class="d">{esc(title.upper())}</text>
-<rect x="24" y="92" width="200" height="2" fill="rgba(245,245,245,0.2)"/>
-<rect x="24" y="92" width="{bar:.0f}" height="2" fill="#edff45"/>
+<rect x="24" y="92" width="200" height="2" fill="rgba(255,244,230,0.16)"/>
+<rect x="24" y="92" width="{bar:.0f}" height="2" fill="#c4361c"/>
 <text x="24" y="112" class="x">{prog.xp:,} XP</text>
-<line x1="24" y1="126" x2="244" y2="126" stroke="rgba(245,245,245,0.2)"/>
+<line x1="24" y1="126" x2="244" y2="126" stroke="rgba(255,244,230,0.16)"/>
 {lines}
 <text x="276" y="134" class="k">Last {weeks} weeks</text>
 {"".join(cells)}

@@ -4,6 +4,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const handler = require("../api/squad.js");
+const contributors = require("../api/contributors.js");
 
 const PUBLIC = path.join(__dirname, "..", "public");
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
@@ -23,6 +24,7 @@ http.createServer((req, res) => {
     req.url = url.pathname + url.search;
   }
   if (url.pathname === "/api/squad") return handler(req, res);
+  if (url.pathname === "/api/contributors") return contributors(req, res);
   let file = /^\/r\/[^/]+\/?$/.test(url.pathname) || url.pathname === "/" ? "/index.html" : url.pathname;
   file = path.join(PUBLIC, path.normalize(file).replace(/^(\.\.[/\\])+/, ""));
   fs.readFile(file, (err, data) => {
