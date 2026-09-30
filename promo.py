@@ -1996,7 +1996,7 @@ def cmd_squad_join(argv: List[str]) -> int:
     """`promo squad join URL [--name N] [--token T]`: write the squad config."""
     p = argparse.ArgumentParser(prog="promo squad join",
                                 description="Join a squad room or the public leaderboard.")
-    p.add_argument("url", help="room URL, e.g. https://promo-leaderboard.vercel.app/r/global")
+    p.add_argument("url", help="room URL, e.g. https://promo-seven-virid.vercel.app/r/global")
     p.add_argument("--name", help="your name on the board (default: git user.name)")
     p.add_argument("--token", default="", help="token for a private room")
     args = p.parse_args(argv)

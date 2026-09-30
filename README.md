@@ -259,12 +259,12 @@ A keyboard-driven leaderboard lives in this repo:
 **Deploy it (about 3 minutes, free tiers):**
 1. On [vercel.com/new](https://vercel.com/new), import `kimathikim/promo`. There's no build step. `vercel.json` sets the framework to none and `.vercelignore` hides the Python CLI, so even if Vercel suggests a Python preset you can leave it (or pick **Other**).
 2. In the project, open **Storage → Marketplace → Upstash (Redis)**, create a database and connect it. Vercel adds `KV_REST_API_URL` and `KV_REST_API_TOKEN` for you.
-3. Redeploy. Your leaderboard is at `https://<project>.vercel.app`, and the global room is at `/r/global`.
+3. Redeploy. Your leaderboard is at `https://<project>.vercel.app` (the public one is [promo-seven-virid.vercel.app](https://promo-seven-virid.vercel.app)), and the global room is at `/r/global`.
 
 **Join from the terminal:**
 
 ```sh
-promo squad join https://<project>.vercel.app --name yourname
+promo squad join https://promo-seven-virid.vercel.app/r/global --name yourname
 ```
 
 **Good to know:**
@@ -334,7 +334,7 @@ Requires Python 3.7+ and [`rich`](https://github.com/Textualize/rich). The Neovi
 One command (installs `rich` if needed and puts `promo` in `~/.local/bin`):
 
 ```sh
-curl -fsSL https://<project>.vercel.app/install.sh | sh
+curl -fsSL https://promo-seven-virid.vercel.app/install.sh | sh
 # or straight from GitHub:
 curl -fsSL https://raw.githubusercontent.com/kimathikim/promo/main/public/install.sh | sh
 ```
