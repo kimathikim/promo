@@ -9,6 +9,10 @@
   const apiBase = (params.get("api") || window.PROMO_API || location.origin).replace(/\/$/, "");
   const token = params.get("key") || "";
   const endpoint = `${apiBase}/r/${encodeURIComponent(room)}/api${token ? `?key=${encodeURIComponent(token)}` : ""}`;
+  // The public site. Install and join commands point here, except when the page is
+  // served from somewhere else (self-hosted or local), where they use that origin.
+  const SITE = "https://promo-seven-virid.vercel.app";
+  const origin = /\.vercel\.app$/.test(location.hostname) ? SITE : location.origin;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const POLL_MS = 15000;
 
@@ -498,9 +502,9 @@
 
   function boot() {
     $("#room-name").textContent = room;
-    const url = `${location.origin}/r/${room}`;
+    const url = `${origin}/r/${room}`;
     $("#join-cmd").textContent = `promo squad join ${url} --name YOUR_NAME${token ? " --token YOUR_TOKEN" : ""}`;
-    $("#install").textContent = `curl -fsSL ${location.origin}/install.sh | sh`;
+    $("#install").textContent = `curl -fsSL ${origin}/install.sh | sh`;
     document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.sort === S.sort)));
     status("connecting…");
     typeCommand(`promo squad --room ${room} --watch`, () => {

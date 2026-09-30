@@ -1,5 +1,5 @@
 #!/bin/sh
-# promo installer: curl -fsSL https://<this site>/install.sh | sh
+# promo installer: curl -fsSL https://promo-seven-virid.vercel.app/install.sh | sh
 #
 # Installs the promo CLI into ~/.local/bin (override with PROMO_BIN=/path).
 # Needs Python 3.7+. Installs the `rich` library if it isn't there yet.
