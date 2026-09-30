@@ -149,11 +149,20 @@
         <li class="gc">
           <span class="step-n" aria-hidden="true">01</span>
           <h3 class="h4">Get promo</h3>
-          <p>One Python file and the <code>rich</code> library. Nothing else to install.</p>
-          <pre><code id="install">pip install rich
-curl -fsSL https://raw.githubusercontent.com/kimathikim/promo/main/promo.py -o ~/.local/bin/promo
-chmod +x ~/.local/bin/promo</code></pre>
+          <p>One command. Needs Python 3.7+; installs into <code>~/.local/bin</code>.</p>
+          <pre><code id="install">curl -fsSL https://raw.githubusercontent.com/kimathikim/promo/main/public/install.sh | sh</code></pre>
           <button class="btn btn-sm copy" data-copy="install">Copy</button>
+          <details class="manual">
+            <summary>Prefer to see every step?</summary>
+            <pre><code id="install-manual">pip install --user rich
+mkdir -p ~/.local/bin
+curl -fsSLo ~/.local/bin/promo https://raw.githubusercontent.com/kimathikim/promo/main/promo.py
+chmod +x ~/.local/bin/promo
+promo --help</code></pre>
+            <button class="btn btn-sm copy" data-copy="install-manual">Copy</button>
+            <p><strong>promo: command not found?</strong> Add <code>~/.local/bin</code> to your PATH and open a new terminal. The installer prints the exact line for your shell.</p>
+            <p><strong>Hacking on it?</strong> Clone the repo and symlink <code>promo.py</code> into <code>~/.local/bin</code>.</p>
+          </details>
         </li>
         <li class="gc">
           <span class="step-n" aria-hidden="true">02</span>

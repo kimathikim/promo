@@ -500,6 +500,7 @@
     $("#room-name").textContent = room;
     const url = `${location.origin}/r/${room}`;
     $("#join-cmd").textContent = `promo squad join ${url} --name YOUR_NAME${token ? " --token YOUR_TOKEN" : ""}`;
+    $("#install").textContent = `curl -fsSL ${location.origin}/install.sh | sh`;
     document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.sort === S.sort)));
     status("connecting…");
     typeCommand(`promo squad --room ${room} --watch`, () => {
