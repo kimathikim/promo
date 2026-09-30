@@ -57,8 +57,7 @@
     if (text != null) n.textContent = text;
     return n;
   };
-  const ICON = { focus: "🍅", break: "☕", long_break: "🌴" };
-  const LABEL = { focus: "FOCUS", break: "BREAK", long_break: "LONG BREAK" };
+  const LABEL = { focus: "Focus", break: "Break", long_break: "Long break" };
 
   // Members report their own local day; a stale "today" from yesterday must
   // not keep someone on top, so values expire with the calendar.
@@ -87,9 +86,9 @@
     const who = e.name;
     switch (e.type) {
       case "session": return `${who} finished ${fmtMin(e.minutes)}${e.level ? ` (${e.level})` : ""}`;
-      case "achievement": return `🏆 ${who} unlocked ${e.title}`;
-      case "level_up": return `⬆ ${who} is now ${e.title}`;
-      case "kudos": return `🔥 ${who} sent kudos to ${e.to}`;
+      case "achievement": return `${who} unlocked ${e.title}`;
+      case "level_up": return `${who} reached ${e.title}`;
+      case "kudos": return `${who} sent kudos to ${e.to}`;
       default: return `${who}: ${e.type}`;
     }
   }
@@ -123,7 +122,7 @@
   function setLive(on) {
     const live = $("#live");
     live.className = `live ${on ? "on" : "off"}`;
-    live.textContent = on ? "live" : S.demo ? "demo" : "offline";
+    live.textContent = on ? "Live" : S.demo ? "Demo" : "Offline";
   }
 
   // ------------------------------------------------------------ render
@@ -138,7 +137,7 @@
     renderNow(members, now);
     renderBoard(members, now);
     renderFeed(snap.events || []);
-    status(`${S.demo ? "◆ demo" : "✓ connected"} · ${members.length} dev${members.length === 1 ? "" : "s"} · ${focusing.length} focusing now`);
+    status(`${S.demo ? "Demo data" : "Connected"} · ${members.length} developer${members.length === 1 ? "" : "s"} · ${focusing.length} focusing now`);
   }
 
   function status(text) {
@@ -151,7 +150,7 @@
     $("#total-now").textContent = focusing.length;
     const hot = members.filter((m) => m.online && m.state && m.state.combo >= 2)
       .sort((a, b) => b.state.combo - a.state.combo)[0];
-    $("#total-combo").textContent = hot ? `🔥x${hot.state.combo} ${hot.name}` : "—";
+    $("#total-combo").textContent = hot ? `×${hot.state.combo} ${hot.name}` : "—";
   }
 
   function renderNow(members, now) {
@@ -160,7 +159,7 @@
     const active = members.filter((m) => m.online && m.state)
       .sort((a, b) => (a.state.phase !== "focus") - (b.state.phase !== "focus") || remaining(a.state, now) - remaining(b.state, now));
     if (!active.length) {
-      list.append(el("li", "none", "nobody is focusing right now. start a session and you're #1 on this screen."));
+      list.append(el("li", "none", "Nobody is focusing right now. Start a session and you're first on this screen."));
       return;
     }
     for (const m of active.slice(0, 12)) {
@@ -168,14 +167,17 @@
       const li = el("li", `card is-${st.paused ? "paused" : st.phase}`);
       li.dataset.name = m.name;
       const who = el("div", "who");
-      who.append(el("span", "", m.name), el("span", "phase", st.paused ? "⏸ PAUSED" : `${ICON[st.phase]} ${LABEL[st.phase]}`));
-      const flip = el("div", "flip");
+      const meta = el("span", "meta");
+      if (st.combo >= 2) meta.append(el("span", "combo", `×${st.combo}`));
+      meta.append(el("span", "phase", st.paused ? "Paused" : LABEL[st.phase]));
+      who.append(el("span", "name", m.name), meta);
+      const flip = el("div", "timer");
       flip.setAttribute("aria-label", "time left");
-      const combo = st.combo >= 2 ? el("span", "combo", `🔥x${st.combo}`) : null;
-      const bar = el("div", "bar-mini");
+      const bar = el("div", "progress");
       bar.append(el("span"));
-      li.append(who, el("div", "task", st.task ? `“${st.task}”` : st.project || ""), flip, bar);
-      if (combo) flip.append(combo);
+      const arc = el("span", "arc");
+      arc.setAttribute("aria-hidden", "true");
+      li.append(arc, who, el("p", "task", st.task ? `“${st.task}”` : st.project || ""), flip, bar);
       li._state = st;
       li._now0 = now;
       list.append(li);
@@ -190,7 +192,7 @@
       const st = li._state;
       const left = remaining(st, now);
       const text = clock(left);
-      const flip = li.querySelector(".flip");
+      const flip = li.querySelector(".timer");
       const combo = flip.querySelector(".combo");
       const old = flip._text || "";
       if (text !== old) {
@@ -205,15 +207,15 @@
         flip.setAttribute("aria-label", `${text} left`);
       }
       const pct = st.planned ? Math.min(100, 100 * (1 - Math.max(0, left) / st.planned)) : 0;
-      li.querySelector(".bar-mini span").style.width = `${pct}%`;
+      li.querySelector(".progress span").style.width = `${pct}%`;
     }
   }
 
   const METRIC = {
-    today: { label: "today", noun: " today", val: (m) => m.today, fmt: fmtMin },
-    week: { label: "week", noun: " this week", val: (m) => m.week, fmt: fmtMin },
-    streak: { label: "streak", noun: " streak", val: (m) => m.streak, fmt: (v) => `${v}d` },
-    xp: { label: "xp", noun: "", val: (m) => m.xp, fmt: (v) => `${Number(v).toLocaleString()} xp` },
+    today: { label: "Today", noun: " today", val: (m) => m.today, fmt: fmtMin },
+    week: { label: "Week", noun: " this week", val: (m) => m.week, fmt: fmtMin },
+    streak: { label: "Streak", noun: " streak", val: (m) => m.streak, fmt: (v) => `${v}d` },
+    xp: { label: "XP", noun: "", val: (m) => m.xp, fmt: (v) => `${Number(v).toLocaleString()} xp` },
   };
 
   function rankedList(members) {
@@ -242,7 +244,7 @@
       tr.dataset.name = m.name;
       tr.dataset.index = i;
       const was = prev.get(m.name);
-      const rank = el("td", `rank ${m.rank <= 3 ? `top r${m.rank}` : ""}`, m.rank <= 3 ? ["①", "②", "③"][m.rank - 1] : m.rank);
+      const rank = el("td", `rank${m.rank <= 3 ? " top" : ""}`, String(m.rank).padStart(2, "0"));
       if (was && was !== m.rank) {
         rank.append(el("span", `delta ${was > m.rank ? "up" : "down"}`, `${was > m.rank ? "▲" : "▼"}${Math.abs(was - m.rank)}`));
         tr.classList.add("moved");
@@ -250,17 +252,20 @@
       const dev = el("td", "dev", m.name);
       if (m.online) {
         const focusing = m.state && m.state.phase === "focus";
-        const dot = el("span", `on${focusing ? "" : " idle"}`, "●");
+        const dot = el("span", `on${focusing ? "" : " idle"}`);
         dot.title = focusing ? "focusing" : "online";
         dev.append(dot, el("span", "sr-only", focusing ? " (focusing)" : " (online)"));
       }
-      const width = 22;
-      const filled = Math.round((metric.val(m) / max) * width);
-      const bar = el("td", "ascii bar-col", "█".repeat(filled));
+      if (m.name === S.me) dev.append(el("span", "you-tag", "You"));
+      const bar = el("td", "bar-col");
       bar.setAttribute("aria-hidden", "true");
-      bar.append(el("span", "rest", "░".repeat(width - filled)));
-      tr.append(rank, dev, bar, el("td", "num", metric.fmt(metric.val(m))),
-        el("td", "lvl", m.stats.level || ""), el("td", "num combo-col", `x${m.stats.best_combo || 0}`));
+      const track = el("div", "bar");
+      const fill = el("span");
+      fill.style.width = `${Math.round((metric.val(m) / max) * 100)}%`;
+      track.append(fill);
+      bar.append(track);
+      tr.append(rank, dev, bar, el("td", "num metric", metric.fmt(metric.val(m))),
+        el("td", "lvl", m.stats.level || ""), el("td", "num combo-col", `×${m.stats.best_combo || 0}`));
       tbody.append(tr);
       if (S.expanded === m.name) tbody.append(detailRow(m, now));
     });
@@ -269,8 +274,8 @@
     const empty = $("#empty");
     empty.hidden = shown.length > 0;
     empty.textContent = ranked.length
-      ? `no dev matches "${S.filter}".`
-      : "this room is empty. run the two commands below and you'll show up here within a minute.";
+      ? `No developer matches "${S.filter}".`
+      : "This room is empty. Run the two commands below and you'll appear here within a minute.";
     renderYou(ranked, metric);
   }
 
@@ -279,7 +284,7 @@
     const td = el("td");
     td.colSpan = 6;
     const bits = [
-      ["sessions", m.stats.sessions || 0], ["streak", `${m.streak}d`], ["best combo", `x${m.stats.best_combo || 0}`],
+      ["sessions", m.stats.sessions || 0], ["streak", `${m.streak}d`], ["best combo", `×${m.stats.best_combo || 0}`],
       ["xp", (m.xp || 0).toLocaleString()], ["last seen", m.online ? "now" : ago(m.last_seen || 0)],
     ];
     bits.forEach(([k, v], i) => {
@@ -287,12 +292,10 @@
       td.append(`${k} `, el("b", "", String(v)));
     });
     if (m.state) {
-      td.append(" · now ", el("b", "", `${ICON[m.state.phase]} ${clock(remaining(m.state, now))}`));
+      td.append(" · now ", el("b", "", `${LABEL[m.state.phase].toLowerCase()} ${clock(remaining(m.state, now))}`));
       if (m.state.task) td.append(` on “${m.state.task}”`);
     }
-    const btn = el("button", "copy", m.name === S.me ? "not me" : "that's me");
-    btn.style.position = "static";
-    btn.style.marginLeft = "12px";
+    const btn = el("button", "btn btn-sm", m.name === S.me ? "Not me" : "That's me");
     btn.addEventListener("click", (e) => { e.stopPropagation(); setMe(m.name === S.me ? "" : m.name); });
     td.append(btn);
     tr.append(td);
@@ -336,7 +339,7 @@
       });
       while (feed.children.length > 60) feed.lastChild.remove();
     }
-    if (!feed.children.length) feed.append(el("li", "muted", "waiting for the first win…"));
+    if (!feed.children.length) feed.append(el("li", "muted", "Waiting for the first win…"));
   }
 
   function feedItem(e, isNew) {
@@ -376,16 +379,14 @@
 
   function openFilter() {
     $("#filter-wrap").hidden = false;
-    $("#mode").textContent = "FILTER";
-    $("#mode").classList.add("filter");
+
     $("#filter").focus();
   }
 
   function closeFilter(clear) {
     if (clear) { S.filter = ""; $("#filter").value = ""; }
     $("#filter-wrap").hidden = !S.filter;
-    $("#mode").textContent = "NORMAL";
-    $("#mode").classList.remove("filter");
+
     $("#filter").blur();
     if (S.snap) render(S.snap);
   }
@@ -428,9 +429,9 @@
       const r = document.createRange(); r.selectNodeContents($(`#${btn.dataset.copy}`));
       getSelection().removeAllRanges(); getSelection().addRange(r);
     }
-    btn.textContent = "copied ✓";
+    btn.textContent = "Copied";
     btn.classList.add("done");
-    setTimeout(() => { btn.textContent = "copy"; btn.classList.remove("done"); }, 1600);
+    setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1600);
   }));
 
   // ------------------------------------------------------------ boot
@@ -448,6 +449,7 @@
 
   function boot() {
     $("#room-name").textContent = room;
+    $("#ghost").textContent = room;
     const url = `${location.origin}/r/${room}`;
     $("#join-cmd").textContent = `promo squad join ${url} --name YOUR_NAME${token ? " --token YOUR_TOKEN" : ""}`;
     document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.sort === S.sort)));

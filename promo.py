@@ -1661,47 +1661,75 @@ def member_badge(m: dict, now: float) -> str:
     return f"{PHASES[st['phase']][2]} {math.ceil(remaining / 60)}m"
 
 
-DASHBOARD = """<!doctype html><html><head><meta charset="utf-8">
+DASHBOARD = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="15"><title>promo · {room}</title>
+<meta http-equiv="refresh" content="15"><meta name="theme-color" content="#0000f2">
+<title>promo · {room}</title>
 <style>
-body{{background:#0f1115;color:#e6e6e6;font:15px/1.5 ui-monospace,Menlo,Consolas,monospace;
-margin:0;padding:24px 16px}}main{{max-width:760px;margin:auto}}
-h1{{font-size:18px}}h2{{font-size:14px;color:#8b919c;margin-top:28px}}
-table{{width:100%;border-collapse:collapse}}td,th{{padding:6px 8px;text-align:left}}
-th{{color:#8b919c;font-weight:normal;border-bottom:1px solid #2c313c}}
-.num{{text-align:right}}.dim{{color:#8b919c}}.on{{color:#ff6b6b}}li{{margin:4px 0}}
-ul{{padding-left:18px}}</style></head><body><main>
-<h1>🍅 promo squad · {room}</h1>
-<h2>RIGHT NOW</h2><p>{now}</p>
-<h2>TODAY</h2><table><tr><th>#</th><th>dev</th><th class="num">today</th>
-<th class="num">week</th><th class="num">streak</th><th>level</th></tr>{rows}</table>
-<h2>FEED</h2><ul>{feed}</ul>
-<p class="dim">auto-refreshes every 15s · join with <code>squad = {url}</code></p>
+:root{{--blue:#0000f2;--white:#f5f5f5;--fg2:#b8b8f4;--line:rgba(245,245,245,.2);--accent:#edff45}}
+*{{box-sizing:border-box}}
+body{{margin:0;background:var(--blue);color:var(--white);
+font:16px/1.7 "Archivo","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}}
+::selection{{background:var(--accent);color:var(--blue)}}
+main{{max-width:1100px;margin:auto;padding:56px 24px}}
+h1,h2{{font-family:"Newsreader","Times New Roman",Georgia,serif;font-weight:300;
+text-transform:uppercase;letter-spacing:.03em;margin:0}}
+h1{{font-size:clamp(48px,8vw,104px);line-height:.95}}
+h2{{font-size:clamp(28px,4vw,48px);margin:64px 0 20px;padding-bottom:14px;border-bottom:1px solid var(--line)}}
+.eyebrow,th,.cap{{font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:var(--fg2)}}
+.eyebrow{{font-family:"Courier Prime","Courier New",monospace;margin:0 0 20px}}
+table{{width:100%;border-collapse:collapse}}
+th,td{{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line)}}
+td{{font-weight:600;text-transform:uppercase;letter-spacing:.06em}}
+.num{{text-align:right;font-family:"Newsreader","Times New Roman",Georgia,serif;font-weight:300;
+font-size:22px;letter-spacing:.02em;text-transform:none}}
+.rank{{font-family:"Newsreader","Times New Roman",Georgia,serif;font-weight:300;font-size:28px;color:var(--white)}}
+.lvl{{font:400 13px "Courier Prime","Courier New",monospace;color:var(--fg2);letter-spacing:.08em}}
+.on{{display:inline-block;width:8px;height:8px;margin-left:8px;background:var(--accent)}}
+.now{{font-size:20px}}.now b{{color:var(--accent);font-weight:600}}
+ul{{list-style:none;margin:0;padding:0;font:15px/1.6 "Courier Prime","Courier New",monospace}}
+li{{padding:10px 0;border-bottom:1px solid var(--line)}}li time{{color:var(--fg2);margin-right:16px}}
+code{{font-family:"Courier Prime","Courier New",monospace}}
+th.r{{text-align:right}}.now span{{color:var(--fg2);font:400 14px "Courier Prime","Courier New",monospace;letter-spacing:.08em;text-transform:uppercase}}
+footer{{margin-top:48px}}
+</style></head><body><main>
+<p class="eyebrow">promo squad / {room}</p>
+<h1>Focus,<br>together.</h1>
+<h2>Right now</h2><p class="now">{now}</p>
+<h2>Today</h2><table><tr><th>Rank</th><th>Developer</th><th class="r">Today</th>
+<th class="r">Week</th><th class="r">Streak</th><th>Level</th></tr>{rows}</table>
+<h2>The feed</h2><ul>{feed}</ul>
+<footer class="cap">Refreshes every 15 s · join with <code>promo squad join {url}</code></footer>
 </main></body></html>"""
 
 
 def render_dashboard(snap: dict, url: str) -> str:
     esc = html.escape
     now = snap["now"]
-    focusing = [f"<span class='on'>{esc(m['name'])}</span> {esc(member_badge(m, now))}"
+    def badge(m):  # "focus 12m" instead of the terminal's emoji
+        text = re.sub(r"^[^A-Za-z0-9]+", "", member_badge(m, now))
+        return f"{PHASES[m['state']['phase']][0].lower()} {text}" if text[:1].isdigit() else text
+    focusing = [f"<b>{esc(m['name'])}</b> <span>{esc(badge(m))}</span>"
                 for m in snap["members"] if m["online"] and m.get("state")]
+    ranked = sorted(((m, fresh_stats(m, now)) for m in snap["members"]),
+                    key=lambda ms: -ms[1].get("today_min", 0))
     rows = "".join(
-        f"<tr><td class='dim'>{i}</td><td>{esc(m['name'])}"
-        f"{' <span class=on>●</span>' if m['online'] else ''}</td>"
-        f"<td class='num'>{esc(fmt_minutes(m['stats'].get('today_min', 0)))}</td>"
-        f"<td class='num'>{esc(fmt_minutes(m['stats'].get('week_min', 0)))}</td>"
-        f"<td class='num'>{m['stats'].get('streak', 0)}d</td>"
-        f"<td>{esc(m['stats'].get('level', ''))}</td></tr>"
-        for i, m in enumerate(snap["members"], 1))
+        f"<tr><td class='rank'>{i:02d}</td><td>{esc(m['name'])}"
+        f"{'<span class=on></span>' if m['online'] else ''}</td>"
+        f"<td class='num'>{esc(fmt_minutes(st.get('today_min', 0)))}</td>"
+        f"<td class='num'>{esc(fmt_minutes(st.get('week_min', 0)))}</td>"
+        f"<td class='num'>{st.get('streak', 0)}d</td>"
+        f"<td class='lvl'>{esc(st.get('level', ''))}</td></tr>"
+        for i, (m, st) in enumerate(ranked, 1))
+    # the web look is text-only: drop the leading emoji the terminal uses
     feed = "".join(
-        f"<li>{esc(describe_event(e))} <span class='dim'>"
-        f"{esc(datetime.fromtimestamp(e['t']).strftime('%a %H:%M'))}</span></li>"
+        f"<li><time>{esc(datetime.fromtimestamp(e['t']).strftime('%a %H:%M'))}</time>"
+        f"{esc(re.sub(r'^[^A-Za-z0-9]+', '', describe_event(e)))}</li>"
         for e in reversed(snap["events"][-20:]))
     return DASHBOARD.format(room=esc(snap["room"]), url=esc(url),
-                            now=" · ".join(focusing) or "<span class='dim'>nobody is focusing</span>",
-                            rows=rows or "<tr><td colspan=6 class='dim'>no members yet</td></tr>",
-                            feed=feed or "<li class='dim'>nothing yet</li>")
+                            now=" · ".join(focusing) or "Nobody is focusing right now.",
+                            rows=rows or "<tr><td colspan=6>No members yet</td></tr>",
+                            feed=feed or "<li>Nothing yet</li>")
 
 
 def make_squad_handler(store: SquadStore, token: str):
@@ -2285,34 +2313,46 @@ def cmd_card(argv: List[str]) -> int:
     esc = html.escape
     weeks = 17
     start = today - timedelta(days=today.weekday()) - timedelta(weeks=weeks - 1)
+    # white at rising opacity on blue, acid for the biggest days
+    heat = ["rgba(245,245,245,0.12)", "rgba(245,245,245,0.35)", "rgba(245,245,245,0.6)",
+            "#f5f5f5", "#edff45"]
     cells = []
     for w in range(weeks):
         for wd in range(7):
             d = start + timedelta(weeks=w, days=wd)
             if d <= today:
-                cells.append(f'<rect x="{278 + w * 11}" y="{62 + wd * 11}" width="9" '
-                             f'height="9" rx="2" fill="{HEAT[heat_level(by_day.get(d, 0))]}"/>')
-    bar = 150 * min(1.0, into / span) if span else 150
-    stats = [("this week", fmt_minutes(week)), ("streak", f"{current_streak(by_day)} days"),
-             ("sessions", str(sum(1 for r in rows if r.get("phase") == "focus"))),
-             ("best combo", f"x{prog.best_combo}"),
-             ("achievements", f"{len(prog.unlocked)}/{len(ACHIEVEMENTS)}")]
+                cells.append(f'<rect x="{276 + w * 11}" y="{146 + wd * 11}" width="9" '
+                             f'height="9" fill="{heat[heat_level(by_day.get(d, 0))]}"/>')
+    bar = 200 * min(1.0, into / span) if span else 200
+    stats = [("This week", fmt_minutes(week)), ("Streak", f"{current_streak(by_day)} days"),
+             ("Sessions", str(sum(1 for r in rows if r.get("phase") == "focus"))),
+             ("Best combo", f"×{prog.best_combo}"),
+             ("Achievements", f"{len(prog.unlocked)}/{len(ACHIEVEMENTS)}")]
     lines = "".join(
-        f'<text x="24" y="{104 + i * 19}" class="k">{k}</text>'
-        f'<text x="130" y="{104 + i * 19}" class="v">{esc(v)}</text>'
+        f'<text x="24" y="{146 + i * 15}" class="k">{k}</text>'
+        f'<text x="244" y="{146 + i * 15}" class="v" text-anchor="end">{esc(v)}</text>'
         for i, (k, v) in enumerate(stats))
-    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="480" height="210" viewBox="0 0 480 210">
-<style>text{{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}}
-.t{{font-size:15px;font-weight:700;fill:#f1f1f1}}.k{{font-size:12px;fill:#8b919c}}
-.v{{font-size:12px;fill:#f1f1f1;font-weight:600}}.l{{font-size:13px;fill:#facc15;font-weight:700}}</style>
-<rect width="480" height="210" rx="10" fill="#0f1115" stroke="#2c313c"/>
-<text x="24" y="34" class="t">🍅 {esc(args.name)} · promo</text>
-<text x="24" y="60" class="l">{esc(title)}</text>
-<rect x="24" y="68" width="150" height="6" rx="3" fill="#2c313c"/>
-<rect x="24" y="68" width="{bar:.0f}" height="6" rx="3" fill="#facc15"/>
-<text x="182" y="75" class="k">{prog.xp:,} XP</text>
+    serif = "Newsreader,'Times New Roman',Georgia,serif"
+    sans = "Archivo,'Helvetica Neue',Arial,sans-serif"
+    mono = "'Courier Prime','Courier New',monospace"
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="480" height="230" viewBox="0 0 480 230">
+<style>
+.e{{font:400 10px {mono};letter-spacing:.1em;fill:#b8b8f4;text-transform:uppercase}}
+.d{{font:300 28px {serif};letter-spacing:.03em;fill:#f5f5f5;text-transform:uppercase}}
+.k{{font:500 10px {sans};letter-spacing:.1em;fill:#b8b8f4;text-transform:uppercase}}
+.v{{font:300 14px {serif};letter-spacing:.02em;fill:#f5f5f5}}
+.x{{font:400 10px {mono};letter-spacing:.08em;fill:#edff45}}
+</style>
+<rect width="480" height="230" fill="#0000f2"/>
+<rect x="0.5" y="0.5" width="479" height="229" fill="none" stroke="rgba(245,245,245,0.2)"/>
+<text x="24" y="32" class="e">PROMO / {esc(args.name.upper())}</text>
+<text x="24" y="76" class="d">{esc(title.upper())}</text>
+<rect x="24" y="92" width="200" height="2" fill="rgba(245,245,245,0.2)"/>
+<rect x="24" y="92" width="{bar:.0f}" height="2" fill="#edff45"/>
+<text x="24" y="112" class="x">{prog.xp:,} XP</text>
+<line x1="24" y1="126" x2="244" y2="126" stroke="rgba(245,245,245,0.2)"/>
 {lines}
-<text x="278" y="48" class="k">last {weeks} weeks</text>
+<text x="276" y="134" class="k">Last {weeks} weeks</text>
 {"".join(cells)}
 </svg>
 """

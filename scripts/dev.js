@@ -7,7 +7,7 @@ const handler = require("../api/squad.js");
 
 const PUBLIC = path.join(__dirname, "..", "public");
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
-  ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon" };
+  ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".woff2": "font/woff2", ".md": "text/markdown" };
 const port = Number(process.argv[2] || 3000);
 // apply the same security headers as production
 const HEADERS = require("../vercel.json").headers.flatMap((h) => h.headers);
