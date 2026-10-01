@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>promo · privacy</title>
+  <meta name="description" content="What the promo leaderboard stores, why, for how long, and how to delete it.">
+  <meta name="theme-color" content="#c4361c">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-head">
+    <a class="brand" href="/" aria-label="promo home">Promo</a>
+    <nav class="nav" aria-label="Sections">
+      <a href="/">Leaderboard</a>
+      <a href="https://github.com/kimathikim/promo">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="band" data-surface="paper" aria-labelledby="privacy-h">
+      <div class="band-head">
+        <h1 id="privacy-h" class="h2">Privacy</h1>
+        <p class="caption">Plain words. Last updated October 2026.</p>
+      </div>
+      <div class="prose">
+        <p>promo is a timer that runs on your computer. Your session history, notes and settings stay on your disk and never leave it unless you join a squad. This page covers what the public leaderboard on this site stores when you do.</p>
+
+        <h2 class="h4">What the leaderboard stores</h2>
+        <table>
+          <thead><tr><th scope="col">Data</th><th scope="col">Why</th></tr></thead>
+          <tbody>
+            <tr><td>The name you choose</td><td>To show you on the board. It doesn't have to be your real name.</td></tr>
+            <tr><td>A hash of your member key</td><td>So nobody else can post as you. The key itself stays on your machine.</td></tr>
+            <tr><td>Phase and time left, while a timer runs</td><td>The "Right now" view. Cleared when you stop.</td></tr>
+            <tr><td>Today's and this week's focus minutes, streak, XP, level, best combo, session count</td><td>The rankings.</td></tr>
+            <tr><td>Feed items: finished sessions, achievements, level-ups, kudos</td><td>The feed. Only the latest 300 per room are kept.</td></tr>
+            <tr><td>Task and project name</td><td>Only if you set <code>share_task = true</code>. Off by default.</td></tr>
+          </tbody>
+        </table>
+
+        <h2 class="h4">What it never stores</h2>
+        <p>Your notes, code, commit messages, file names, session history, email address or IP address. Rate limiting uses a short-lived hash of your IP that expires within two minutes.</p>
+
+        <h2 class="h4">How long it's kept</h2>
+        <p>Until you leave. If you stop using promo, your entry is removed automatically after 90 days without a heartbeat.</p>
+
+        <h2 class="h4">Deleting your data</h2>
+        <p><code>promo squad leave</code> deletes your entry and every feed item that names you, then removes the squad from your config. <code>promo forget</code> does that and also deletes your local history, notes and member key.</p>
+
+        <h2 class="h4">Fair play</h2>
+        <p>The server checks that your minutes can't grow faster than the clock. Entries that keep breaking that rule are hidden from the board, not deleted, so a mistake can be undone. The board is for fun and accountability; please don't use it to judge anyone's work.</p>
+
+        <h2 class="h4">Who runs it</h2>
+        <p>This site is a hobby project by <a href="https://github.com/kimathikim">Brian Kimathi</a>, hosted on Vercel with data in Upstash Redis. It isn't meant for children under 13. Questions or deletion requests: <a href="https://github.com/kimathikim/promo/issues">open an issue</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot grain">
+    <div class="foot-row">
+      <p class="caption">The progressive Pomodoro timer for developers</p>
+      <nav aria-label="Footer">
+        <a href="/">Leaderboard</a>
+        <a href="https://github.com/kimathikim/promo">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
