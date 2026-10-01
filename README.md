@@ -235,9 +235,13 @@ sound = false                         ; turn chimes off
 
 ### Web leaderboard
 
-![Web leaderboard](docs/leaderboard.png)
+Live at **[promo-seven-virid.vercel.app](https://promo-seven-virid.vercel.app)**.
 
-![Leaderboard table](docs/leaderboard-board.png)
+![Web leaderboard](docs/web-hero.png)
+
+![Right now: live timers](docs/web-now.png)
+
+![Leaderboard table](docs/web-board.png)
 
 The look is **Tomato & Ink**. *Pomodoro* is Italian for tomato, so the brand colour is a deep tomato (`#c4361c`). It's paired with near-black ink terminal bands, cream paper surfaces and a leaf-green accent for live and passing states. Instead of decorative letters, the hero carries a tomato drawn entirely in code characters, and the ink bands have a faint field of programming glyphs (`{ } => && ~/ $ λ`). The layout grammar (light serif capitals, tracked grotesk labels, hairline grids) is inspired by the Hermes Agent site. Fonts are self-hosted open-licence faces: Newsreader, Archivo and Courier Prime (see `public/fonts/LICENSE.md`).
 
