@@ -255,6 +255,8 @@ TITLES = ["Intern", "Junior Dev", "Mid-level Dev", "Senior Dev", "Staff Engineer
           "Principal Engineer", "Distinguished Engineer", "10x Engineer",
           "Blazingly Fast"]
 XP_STEP = 150  # level n starts at XP_STEP * n^2
+DAILY_XP_MINUTES = 480  # focus beyond 8h a day still counts in stats, but earns no XP
+REST_DAYS = 1  # missed days per 7 that don't break a streak (config: rest_days)
 
 ACHIEVEMENTS = [
     ("first_blood", "First Blood", "finish your first focus session"),
@@ -295,22 +297,37 @@ class Progress:
         return level_for(self.xp)
 
 
+def break_xp(row: dict) -> int:
+    """Rest is part of the score: a break taken (80%+ of it) earns its minutes in XP."""
+    planned, taken = _num(row.get("planned_min")), _num(row.get("actual_min"))
+    return int(round(min(taken, planned))) if planned and taken >= 0.8 * planned else 0
+
+
 def replay(rows: List[dict]) -> Progress:
-    """Rebuild XP, combo and achievements from logged focus sessions."""
+    """Rebuild XP, combo and achievements from logged sessions.
+
+    Combos only ever add a bonus: breaking one never takes XP away. Focus beyond
+    DAILY_XP_MINUTES in a day earns nothing, so grinding 14-hour days doesn't pay.
+    """
     p = Progress()
     flows = sessions = 0
     by_day: Dict[str, float] = defaultdict(float)
     for r in rows:
         mins = _num(r.get("actual_min"))
+        if r.get("phase") in ("break", "long_break"):
+            p.xp += break_xp(r)
+            continue
         if r.get("phase") != "focus" or mins < 1:
             continue
         level = r.get("focus_level") or ""
         sessions += 1
         p.combo = p.combo + 1 if level in COMBO_LEVELS else 0
         p.best_combo = max(p.best_combo, p.combo)
-        p.xp += session_xp(mins, level, p.combo)
+        day = r.get("date") or ""
+        earning = max(0.0, min(mins, DAILY_XP_MINUTES - by_day[day]))
+        p.xp += session_xp(earning, level, p.combo)
         flows += level == "Flow"
-        by_day[r.get("date") or ""] += mins
+        by_day[day] += mins
         try:
             hour = int((r.get("start") or "12")[:2])
         except ValueError:
@@ -327,13 +344,9 @@ def replay(rows: List[dict]) -> Progress:
             "centurion": sessions >= 100,
         }
         p.unlocked.update(k for k, ok in checks.items() if ok)
-    days = sorted(d for d in by_day if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d))
-    run = best = 0
-    prev = None
-    for d in map(date.fromisoformat, days):
-        run = run + 1 if prev and d - prev == timedelta(days=1) else 1
-        best, prev = max(best, run), d
-    if best >= 7:
+    days = {date.fromisoformat(d): v for d, v in by_day.items()
+            if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d)}
+    if streaks(days, rest_days=0).best >= 7:  # On Fire means 7 real days in a row
         p.unlocked.add("on_fire")
     return p
 
@@ -591,14 +604,48 @@ def focus_by_day(rows: List[dict]) -> Dict[date, float]:
     return by_day
 
 
+@dataclass
+class Streak:
+    current: int = 0     # focus days in the running streak
+    best: int = 0
+    rest_left: int = 0   # rest days still available in this 7-day window
+
+
+def streaks(by_day: Dict[date, float], rest_days: Optional[int] = None,
+            today: Optional[date] = None) -> Streak:
+    """Streaks that forgive the odd day off.
+
+    A streak counts days with focus. A missed day doesn't break it as long as
+    no more than `rest_days` days were missed in the last 7 (default REST_DAYS).
+    Today never breaks a streak: there's still time.
+    """
+    rest_days = REST_DAYS if rest_days is None else max(0, rest_days)
+    today = today or date.today()
+    focus_days = sorted(d for d, v in by_day.items() if v > 0 and d <= today)
+    s = Streak()
+    if not focus_days:
+        s.rest_left = rest_days
+        return s
+    rests: List[date] = []
+    run, day = 0, focus_days[0]
+    while day <= today:
+        if by_day.get(day, 0) > 0:
+            run += 1
+        elif day != today:
+            rests = [r for r in rests if (day - r).days < 7]
+            if run and len(rests) < rest_days:
+                rests.append(day)
+            else:
+                run, rests = 0, []
+        s.best = max(s.best, run)
+        day += timedelta(days=1)
+    s.current = run
+    s.rest_left = max(0, rest_days - len([r for r in rests if (today - r).days < 7]))
+    return s
+
+
 def current_streak(by_day: Dict[date, float]) -> int:
-    """Consecutive days with focus, ending today (or yesterday)."""
-    today = date.today()
-    streak, day = 0, today if by_day.get(today) else today - timedelta(days=1)
-    while by_day.get(day):
-        streak += 1
-        day -= timedelta(days=1)
-    return streak
+    return streaks(by_day).current
 
 
 def append_note(path: str, text: str, task: str, repo: Optional[Repo]) -> bool:
@@ -1363,6 +1410,10 @@ class App:
         self.run_phase(live, inp, brk)
         self.hook("break_end", brk)
         self.finish(brk)
+        xp_before = self.progress.xp if self.progress else 0
+        news = self.level_up_messages()
+        if self.progress and self.progress.xp > xp_before:
+            self.say("rested well   " + "   ".join(news), 6)
         self.alert("long_break_end" if brk.kind == "long_break" else "break_end",
                    "Break over", f"Next: {fmt_minutes(self.focus_min)} of focus")
 
@@ -2193,12 +2244,8 @@ def cmd_stats(args) -> None:
         heat.append("■ ", style=c)
     heat.append("more   (<30m, <1h30, <3h, 3h+ per day)", style=MUTED)
 
-    streak = current_streak(by_day)
-    best_streak = run = 0
-    prev = None
-    for d in sorted(k for k, v in by_day.items() if v > 0):
-        run = run + 1 if prev and d - prev == timedelta(days=1) else 1
-        best_streak, prev = max(best_streak, run), d
+    streak_info = streaks(by_day)
+    streak, best_streak = streak_info.current, streak_info.best
 
     week_start = today - timedelta(days=today.weekday())
     this_week = sum(v for d, v in by_day.items() if d >= week_start)
@@ -2218,8 +2265,12 @@ def cmd_stats(args) -> None:
     summary.add_column()
     summary.add_row("today", fmt_minutes(by_day.get(today, 0)))
     summary.add_row("this week", fmt_minutes(this_week) + trend)
+    rest = ""
+    if REST_DAYS and streak:
+        rest = (f"   {plural(streak_info.rest_left, 'rest day')} left this week"
+                if streak_info.rest_left else "   rest day used, focus tomorrow to keep it")
     summary.add_row("streak", f"{streak} day{'s' if streak != 1 else ''}"
-                    f"   (best {best_streak})")
+                    f"   (best {best_streak}){rest}")
     summary.add_row("sessions", f"{len(focus)}   avg {fmt_minutes(sum(lengths) / len(lengths))}"
                     f"   longest {fmt_minutes(max(lengths))}")
     if args.goal:
@@ -2559,6 +2610,11 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
 
 def main(argv: Optional[List[str]] = None) -> None:
     argv = sys.argv[1:] if argv is None else argv
+    global REST_DAYS
+    try:
+        REST_DAYS = max(0, min(3, int(load_config().get("rest_days", REST_DAYS))))
+    except ValueError:
+        pass
     if argv and argv[0] in REMOTE_COMMANDS:
         sys.exit(cmd_remote(argv))
     simple = {"serve": cmd_serve, "squad": cmd_squad, "kudos": cmd_kudos, "card": cmd_card,
