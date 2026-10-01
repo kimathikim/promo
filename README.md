@@ -172,6 +172,8 @@ The game is built to reward sustainable focus, not grinding:
 
 `--hook CMD` (or `hook =` in the config file) runs a shell command on each of these events: `focus_start`, `focus_end`, `break_start`, `break_end`, `pause`, `resume` and `quit`. It gets the environment variables `PROMO_EVENT`, `PROMO_PHASE`, `PROMO_MINUTES`, `PROMO_TASK`, `PROMO_PROJECT` and `PROMO_BRANCH`.
 
+Ready-made hooks live in [`contrib/hooks/`](contrib/hooks): Slack status and notification snooze, a 🍅 GitHub profile status, Linux do-not-disturb (GNOME, dunst, mako) and macOS Focus. `all.sh` runs several at once. A minimal one looks like this:
+
 ```sh
 #!/bin/sh
 # ~/bin/promo-dnd: silence notifications while focusing (dunst)
@@ -386,4 +388,4 @@ If `promo` isn't found afterwards, add `~/.local/bin` to your `PATH`. Check what
 
 ## Contributing
 
-Contributions to improve the Progressive Pomodoro Timer script are welcome! If you find any issues or have suggestions for enhancements, please create a new issue or submit a pull request on the repository.
+PRs are welcome, and it's a small codebase. [CONTRIBUTING.md](CONTRIBUTING.md) has the setup, a map of where things live in `promo.py`, and the checks CI runs. Good places to start are issues labelled [`good first issue`](https://github.com/kimathikim/promo/labels/good%20first%20issue). In October they count for Hacktoberfest.

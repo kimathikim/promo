@@ -1,0 +1,21 @@
+name: Idea
+description: Suggest a feature or a change.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would this help you do?
+      description: The situation you're in, not just the feature. "When I pair with a teammate, I want…"
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What could promo do?
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Want to build it?
+      options:
+        - label: I'd like to open a PR for this

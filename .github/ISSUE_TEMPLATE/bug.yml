@@ -1,0 +1,27 @@
+name: Bug report
+description: Something doesn't work the way the README says it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead. Screenshots welcome.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: promo version
+      description: Output of `promo --version`.
+      placeholder: promo 1.0.0
+  - type: input
+    id: env
+    attributes:
+      label: OS, terminal and Python version
+      placeholder: macOS 15, Ghostty, Python 3.12
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where?
+      options: [Timer / TUI, Stats or card, Squad or leaderboard site, Neovim plugin, Install, Other]
