@@ -1,14 +1,29 @@
-# PROmodoro — a progressive Pomodoro timer for developers
+# promo
 
-![PROmodoro focus screen](docs/focus.png)
+**Honest focus time for developers. In your terminal, with your squad.**
 
-PROmodoro is a distraction-free terminal timer built around the Pomodoro Technique, with one twist: session length isn't fixed. After every session you rate how focused you were and the next one grows or shrinks, so short attention spans can build up into long flow states.
+[![CI](https://github.com/kimathikim/promo/actions/workflows/ci.yml/badge.svg)](https://github.com/kimathikim/promo/actions/workflows/ci.yml)
+[![Live leaderboard](https://img.shields.io/badge/leaderboard-live-c4361c)](https://promo-seven-virid.vercel.app)
+[![good first issues](https://img.shields.io/github/issues/kimathikim/promo/good%20first%20issue?color=9be564&label=good%20first%20issues)](https://github.com/kimathikim/promo/labels/good%20first%20issue)
 
-It's made for people who live in the terminal: it knows which git repo and branch you're in, counts the commits you make while focused, lets you jot down a stray thought without leaving the timer, and plugs into tmux, waybar and your own scripts.
+![promo: the flip clock counts down, you rate your focus, and the break shows what you earned](docs/demo.gif)
 
-***For better grasp of the idea***
+promo is a Pomodoro timer with one twist: sessions aren't a fixed 25 minutes. After each one you rate how focused you were, and the next session grows or shrinks to match, so short attention spans can build up into long flow states. ([Why progressive sessions?](https://www.youtube.com/watch?v=qtoysJSQTn8&t))
 
-[00:00](https://www.youtube.com/watch?v=qtoysJSQTn8&t)
+```sh
+uv tool install git+https://github.com/kimathikim/promo     # or: pipx install git+https://github.com/kimathikim/promo
+promo 25 "fix the login bug"
+```
+
+No uv or pipx? `curl -fsSL https://promo-seven-virid.vercel.app/install.sh | sh`. More options under [Installation](#installation).
+
+**Why promo and not a time tracker?**
+
+- **It counts focus you chose, not time your editor was open.** You start a session and rate it, so the numbers mean something. Trackers that watch your editor can count idle tabs and browsing too.
+- **It's social without being surveillance.** Join a squad to see who's heads-down right now, send kudos (delivered at their break, never mid-focus), and climb a board with friends. Nothing is shared until you join, and `promo squad leave` deletes it all.
+- **Your history is yours, forever.** Every session lives in a CSV on your disk. No account, no paywall on last month's stats.
+- **It rewards sustainable focus.** Breaks earn XP, streaks forgive a day off, and nothing pays for 14-hour days.
+- **It lives where you work.** Git branch and commits per session, a Neovim plugin, tmux/waybar status, remote control from any shell, and hooks for Slack, GitHub status and do-not-disturb.
 
 ## Features
 
