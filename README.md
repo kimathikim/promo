@@ -335,12 +335,19 @@ status_format = {icon} {time}
 
 Requires Python 3.7+ and [`rich`](https://github.com/Textualize/rich). The Neovim plugin needs Neovim 0.8+. Keyboard controls need a Unix-like terminal (Linux or macOS). A terminal with true colour and a font that has block characters looks best.
 
-One command (installs `rich` if needed and puts `promo` in `~/.local/bin`):
+**With [uv](https://docs.astral.sh/uv/) or [pipx](https://pipx.pypa.io)** (recommended: isolated, no system-Python fuss, easy upgrades):
+
+```sh
+uv tool install git+https://github.com/kimathikim/promo     # upgrade: uv tool upgrade promo-cli
+pipx install git+https://github.com/kimathikim/promo        # upgrade: pipx upgrade promo-cli
+```
+
+**Try it without installing:** `uv run https://raw.githubusercontent.com/kimathikim/promo/main/promo.py 25 "try promo"` (the script declares its own dependencies).
+
+**No uv or pipx?** One command installs `rich` if needed and puts `promo` in `~/.local/bin`:
 
 ```sh
 curl -fsSL https://promo-seven-virid.vercel.app/install.sh | sh
-# or straight from GitHub:
-curl -fsSL https://raw.githubusercontent.com/kimathikim/promo/main/public/install.sh | sh
 ```
 
 Or by hand:
@@ -352,7 +359,7 @@ curl -fsSLo ~/.local/bin/promo https://raw.githubusercontent.com/kimathikim/prom
 chmod +x ~/.local/bin/promo
 ```
 
-If `promo` isn't found afterwards, add `~/.local/bin` to your `PATH`. Hacking on it? Clone the repo and symlink `promo.py` into `~/.local/bin`.
+If `promo` isn't found afterwards, add `~/.local/bin` to your `PATH`. Check what you have with `promo --version`. Hacking on it? Clone the repo and run `uv tool install --editable .` (or symlink `promo.py` into `~/.local/bin`).
 
 ## Contributing
 

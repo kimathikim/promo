@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  cli:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install .
+      - name: Smoke test
+        env:
+          XDG_DATA_HOME: ${{ runner.temp }}/data
+          XDG_CACHE_HOME: ${{ runner.temp }}/cache
+          XDG_CONFIG_HOME: ${{ runner.temp }}/config
+        run: |
+          promo --version
+          promo --help > /dev/null
+          promo stats > /dev/null
+          promo status
+          promo card --help > /dev/null
+          sh -n public/install.sh
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          node --check public/app.js
+          node --check api/squad.js
+          node --check api/contributors.js
