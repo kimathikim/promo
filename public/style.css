@@ -397,6 +397,14 @@ td.num.metric { font-family: var(--font-display); font-weight: 300; font-size: 1
 .manual p { font-size: .875rem; }
 .manual p { font-size: .8125rem; }
 .privacy { margin: 2rem 0 0; max-width: 80ch; color: var(--fg-2); font-size: .9375rem; }
+.privacy a { color: inherit; }
+.prose { max-width: 70ch; }
+.prose p { margin: .5rem 0 1.5rem; color: var(--fg-2); }
+.prose .h4 { margin: 2.5rem 0 .25rem; }
+.prose table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: .9375rem; }
+.prose th, .prose td { text-align: left; vertical-align: top; padding: .75rem .75rem .75rem 0; box-shadow: 0 1px 0 var(--divider); }
+.prose th { font: 500 var(--caption)/1.25rem var(--font-ui); text-transform: uppercase; letter-spacing: .1em; color: var(--fg-2); }
+.prose a { color: inherit; }
 code { font-size: .92em; }
 
 /* ---------------------------------------------------------------- footer */

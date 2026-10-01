@@ -27,6 +27,7 @@ http.createServer((req, res) => {
   if (url.pathname === "/api/contributors") return contributors(req, res);
   let file = /^\/r\/[^/]+\/?$/.test(url.pathname) || url.pathname === "/" ? "/index.html" : url.pathname;
   file = path.join(PUBLIC, path.normalize(file).replace(/^(\.\.[/\\])+/, ""));
+  if (!path.extname(file)) file += ".html"; // cleanUrls, like vercel.json
   fs.readFile(file, (err, data) => {
     if (err) { res.statusCode = 404; return res.end("not found"); }
     res.setHeader("Content-Type", TYPES[path.extname(file)] || "application/octet-stream");

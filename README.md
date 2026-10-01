@@ -280,11 +280,26 @@ promo squad join https://promo-seven-virid.vercel.app/r/global --name yourname
 
 **Good to know:**
 - Names are first come, first served. Each install has a secret key (`~/.local/share/promo/member.key`), so nobody else can post under your name.
-- Stats are self-reported, but capped at what's physically possible (24h a day).
+- Stats are self-reported, so the server checks them against the clock: today's and this week's minutes can't grow faster than real time since your last check-in (plus 30 min of slack). Updates that break the rule are clamped; after 3, the member is hidden from everyone else's board (hidden, never deleted). Set `PROMO_ADMIN_TOKEN` to hide or restore someone by hand: `curl -X POST https://<site>/r/global/api/moderate -H "X-Promo-Admin: $TOKEN" -d '{"name":"x","hidden":false}'`. `promo serve` applies the same rule.
+- Writes are rate-limited per IP (60 a minute), and members not seen for 90 days are removed.
+- **Leaving:** `promo squad leave` deletes your entry and every feed item that names you. `promo forget` also deletes your local history, notes and member key. The site's [privacy notice](https://promo-seven-virid.vercel.app/privacy) says what is stored and why.
 - "Today" and "week" expire with the calendar.
 - For private rooms, set `PROMO_PRIVATE_ROOMS="team-a:secret1,team-b:secret2"` in the Vercel env. Members then pass `--token`, and the page is opened as `/r/team-a?key=secret1`.
 - To keep Redis usage low, the API asks timers to check in every 2 minutes (or immediately on pause, skip and so on), and the CDN caches the board for 5 s.
 - Run it locally with `node scripts/dev.js` (in-memory storage) and open http://localhost:3000.
+
+### What leaves your machine
+
+Nothing, unless you join a squad. Then:
+
+| Shared with the squad server | Never shared |
+|---|---|
+| your chosen name, a hash of your member key | notes, code, commit messages, file names |
+| phase and time left while a timer runs | your session history (only today/week totals) |
+| today's and this week's minutes, streak, XP, level, best combo | email, git identity (your git name is only the default board name) |
+| feed items: finished sessions, achievements, level-ups, kudos | task and repo name, unless `share_task = true` |
+
+Your full history stays in `~/.local/share/promo/sessions.csv`, forever, on your disk.
 
 ### Config file
 

@@ -1499,6 +1499,9 @@ ONLINE_SECONDS = 90
 HEARTBEAT_SECONDS = 30
 EVENT_TYPES = {"session", "achievement", "level_up", "kudos"}
 MAX_BODY = 16 * 1024
+SLACK_MIN = 30      # allowed clock drift when checking minutes against wall time
+STRIKES = 3         # implausible updates before a member is hidden from the board
+RETAIN_DAYS = 90    # members not seen for this long are removed
 
 
 def clean_name(value: str) -> str:
@@ -1573,6 +1576,24 @@ def fresh_stats(m: dict, now: float) -> dict:
     return st
 
 
+def plausible(prev: Optional[dict], stats: dict, now: float) -> Tuple[dict, bool]:
+    """Clamp minutes that grew faster than the clock since the last heartbeat.
+
+    An open-source client can't prove its numbers, so the server checks them
+    against wall time instead (same rule as api/squad.js).
+    """
+    old = (prev or {}).get("stats") or {}
+    if not old or not (prev or {}).get("last_seen"):
+        return stats, False
+    allowed = max(0.0, (now - prev["last_seen"]) / 60) + SLACK_MIN
+    out, strike = dict(stats), False
+    for key, period in (("today_min", "day"), ("week_min", "week")):
+        base = old.get(key, 0)
+        if old.get(period) and old.get(period) == stats.get(period) and out.get(key, 0) > base + allowed:
+            out[key], strike = round(base + allowed, 1), True
+    return out, strike
+
+
 def _clean_event(ev) -> Optional[dict]:
     if not isinstance(ev, dict) or ev.get("type") not in EVENT_TYPES:
         return None
@@ -1634,15 +1655,22 @@ class SquadStore:
         with self.lock:
             room = self._room(room_name)
             now = time.time()
-            members = []
+            members, hidden = [], set()
+            for name in [n for n, m in room["members"].items()
+                         if now - m.get("last_seen", 0) > RETAIN_DAYS * 86400]:
+                del room["members"][name]
             for m in room["members"].values():
+                if m.get("hidden"):
+                    hidden.add(m["name"])
+                    continue
                 online = not m.get("offline") and now - m.get("last_seen", 0) < ONLINE_SECONDS
                 members.append({"name": m["name"], "online": online,
                                 "last_seen": m.get("last_seen", 0),
                                 "state": m.get("state") if online else None,
                                 "stats": m.get("stats", {})})
             members.sort(key=lambda m: -m["stats"].get("today_min", 0))
-            events = [e for e in room["events"] if e["seq"] > since][-50:]
+            events = [e for e in room["events"]
+                      if e["seq"] > since and e.get("name") not in hidden][-50:]
             return {"room": room_name, "now": now, "cursor": room["seq"],
                     "heartbeat": HEARTBEAT_SECONDS, "members": members, "events": events}
 
@@ -1664,11 +1692,15 @@ class SquadStore:
             member = room["members"].get(name, {"name": name})
             self._claim(member, key)
             room["members"][name] = member
-            member["last_seen"] = time.time()
+            now = time.time()
+            if "stats" in body:
+                stats, strike = plausible(member, _clean_stats(body.get("stats")), now)
+                member["stats"] = stats
+                member["strikes"] = member.get("strikes", 0) + strike
+                member["hidden"] = member.get("hidden", False) or member["strikes"] >= STRIKES
+            member["last_seen"] = now
             member["offline"] = bool(body.get("offline"))
             member["state"] = _clean_state(body.get("state"))
-            if "stats" in body:
-                member["stats"] = _clean_stats(body.get("stats"))
             added = self._add_events(room, name, body.get("events"))
             self._save(force=added)
         return self.snapshot(room_name, _clip(body.get("since"), int, 10 ** 12))
@@ -1684,6 +1716,23 @@ class SquadStore:
             if self._add_events(self._room(room_name), name, body.get("events")):
                 self._save(force=True)
         return {"ok": True}
+
+    def leave(self, room_name: str, body: dict, key: str = "") -> dict:
+        """Remove a member and every feed item that names them."""
+        name = body.get("name", "")
+        if not NAME_RE.fullmatch(str(name)):
+            raise ValueError("invalid name")
+        with self.lock:
+            room = self._room(room_name)
+            member = room["members"].get(name)
+            if not member:
+                return {"ok": True, "removed": False}
+            self._claim(member, key)
+            del room["members"][name]
+            room["events"] = [e for e in room["events"]
+                              if e.get("name") != name and e.get("to") != name]
+            self._save(force=True)
+        return {"ok": True, "removed": True}
 
 
 def describe_event(ev: dict, me: str = "") -> str:
@@ -1808,7 +1857,7 @@ def make_squad_handler(store: SquadStore, token: str):
 
         def _route(self):
             url = urllib.parse.urlsplit(self.path)
-            m = re.fullmatch(r"/r/([^/]+)(/api(?:/(heartbeat|event))?)?/?", url.path)
+            m = re.fullmatch(r"/r/([^/]+)(/api(?:/(heartbeat|event|leave))?)?/?", url.path)
             if not m or not ROOM_RE.fullmatch(m.group(1)):
                 return None
             query = urllib.parse.parse_qs(url.query)
@@ -1853,8 +1902,9 @@ def make_squad_handler(store: SquadStore, token: str):
                 if not isinstance(body, dict):
                     raise ValueError("expected an object")
                 key = self.headers.get("X-Promo-Key", "")
-                result = (store.heartbeat(room, body, key) if action == "heartbeat"
-                          else store.post_events(room, body, key))
+                handler = {"heartbeat": store.heartbeat, "event": store.post_events,
+                           "leave": store.leave}[action]
+                result = handler(room, body, key)
             except PermissionError as e:
                 return self._send(403, {"error": str(e)})
             except ValueError as e:
@@ -2066,23 +2116,7 @@ def cmd_squad_join(argv: List[str]) -> int:
     values = {"squad": url, "squad_name": clean_name(args.name or default_squad_name(load_config()))}
     if args.token:
         values["squad_token"] = args.token
-    try:
-        with open(CONFIG_PATH) as f:
-            lines = f.read().splitlines()
-    except OSError:
-        lines = []
-    if not any(line.strip() == "[promo]" for line in lines):
-        lines = ["[promo]"] + lines
-    for key, value in values.items():
-        pattern = re.compile(rf"^\s*{key}\s*=")
-        hit = [i for i, line in enumerate(lines) if pattern.match(line)]
-        if hit:
-            lines[hit[0]] = f"{key} = {value}"
-        else:
-            lines.insert(lines.index("[promo]") + 1, f"{key} = {value}")
-    ensure_dir(CONFIG_PATH)
-    with open(CONFIG_PATH, "w") as f:
-        f.write("\n".join(lines) + "\n")
+    edit_config(values)
     cfg = load_config()
     client = squad_client(cfg)
     rows = Log(cfg.get("log", os.path.join(DATA_DIR, "sessions.csv"))).rows()
@@ -2093,12 +2127,102 @@ def cmd_squad_join(argv: List[str]) -> int:
         print(f"saved to {tilde(CONFIG_PATH)}, but the server said: {e}", file=sys.stderr)
         return 1
     print(f"✓ joined {url} as {client.name}. Your next `promo` session shows up on the board.")
+    print("  shared: your name, focus state and task while a timer runs, and today/week minutes,\n"
+          "  streak, XP and level. Leave and delete it all with `promo squad leave`.")
+    return 0
+
+
+def edit_config(values: Dict[str, str], remove: Tuple[str, ...] = ()) -> None:
+    """Set or remove keys in the [promo] section, keeping comments and order."""
+    try:
+        with open(CONFIG_PATH) as f:
+            lines = f.read().splitlines()
+    except OSError:
+        lines = []
+    if not any(line.strip() == "[promo]" for line in lines):
+        lines = ["[promo]"] + lines
+    for key in remove:
+        lines = [line for line in lines if not re.match(rf"^\s*{key}\s*=", line)]
+    for key, value in values.items():
+        pattern = re.compile(rf"^\s*{key}\s*=")
+        hit = [i for i, line in enumerate(lines) if pattern.match(line)]
+        if hit:
+            lines[hit[0]] = f"{key} = {value}"
+        else:
+            lines.insert(lines.index("[promo]") + 1, f"{key} = {value}")
+    ensure_dir(CONFIG_PATH)
+    with open(CONFIG_PATH, "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def squad_leave(client: SquadClient, keeping_local: bool = True) -> bool:
+    """Ask the server to delete us, then drop the squad from the config."""
+    try:
+        result = client.request("/api/leave", {"name": client.name})
+    except OSError as e:
+        print(f"promo: couldn't reach the squad to delete your data: {e}", file=sys.stderr)
+        return False
+    edit_config({}, remove=("squad", "squad_token", "squad_name"))
+    gone = "deleted your entry and feed items" if result.get("removed") else "you weren't on the board"
+    print(f"✓ left {client.base}: {gone}." + (" Local history is untouched." if keeping_local else ""))
+    return True
+
+
+def cmd_squad_leave(argv: List[str]) -> int:
+    argparse.ArgumentParser(prog="promo squad leave",
+                            description="Leave your squad and delete your data on its server "
+                                        "(your entry and every feed item that names you).").parse_args(argv)
+    client = squad_client(load_config())
+    if not client:
+        print("promo: you're not in a squad.", file=sys.stderr)
+        return 1
+    return 0 if squad_leave(client) else 1
+
+
+def cmd_forget(argv: List[str]) -> int:
+    """Delete everything promo knows about you, here and on your squad's server."""
+    p = argparse.ArgumentParser(prog="promo forget",
+                                description="Delete your squad data, session history, notes, "
+                                            "member key and caches.")
+    p.add_argument("-y", "--yes", action="store_true", help="don't ask for confirmation")
+    args = p.parse_args(argv)
+    cfg = load_config()
+    paths = [cfg.get("log", os.path.join(DATA_DIR, "sessions.csv")),
+             cfg.get("notes", os.path.join(DATA_DIR, "notes.md")),
+             os.path.join(DATA_DIR, "member.key"), STATE_PATH,
+             os.path.join(CACHE_DIR, "sounds")]
+    paths = [os.path.expanduser(x) for x in paths if os.path.exists(os.path.expanduser(x))]
+    client = squad_client(cfg)
+    print("promo forget will delete:")
+    if client:
+        print(f"  • your entry and feed items on {client.base}")
+    for path in paths:
+        print(f"  • {tilde(path)}")
+    if not client and not paths:
+        print("  nothing: promo has no data about you here.")
+        return 0
+    print(f"  (your config {tilde(CONFIG_PATH)} is kept, minus the squad settings)")
+    if not args.yes and input("type 'forget' to confirm: ").strip() != "forget":
+        print("nothing deleted.")
+        return 1
+    if client and not squad_leave(client, keeping_local=False):
+        print("promo: stopped before deleting local files, so your member key still proves "
+              "the squad entry is yours. Try again when the server is reachable.", file=sys.stderr)
+        return 1
+    for path in paths:
+        if os.path.isdir(path):
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            os.remove(path)
+    print("✓ forgotten.")
     return 0
 
 
 def cmd_squad(argv: List[str]) -> int:
     if argv and argv[0] == "join":
         return cmd_squad_join(argv[1:])
+    if argv and argv[0] == "leave":
+        return cmd_squad_leave(argv[1:])
     cfg = load_config()
     p = argparse.ArgumentParser(prog="promo squad", description="Your squad's leaderboard.")
     p.add_argument("--watch", action="store_true", help="refresh every 5 seconds")
@@ -2540,7 +2664,8 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="promo",
         description="Progressive Pomodoro timer: sessions grow with your focus.",
-        epilog="subcommands: stats, status, sound, card, squad, serve, join NAME, kudos NAME, "
+        epilog="subcommands: stats, status, sound, card, squad [join URL | leave], serve, "
+               "join NAME, kudos NAME, forget, "
                "and remote control for a running timer: "
                "toggle, pause, resume, skip, stop, add N, sub N, note TEXT, task TEXT, "
                "rate 1-5.  keys: space pause · s skip · +/- 1 min · n note · "
@@ -2618,7 +2743,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     if argv and argv[0] in REMOTE_COMMANDS:
         sys.exit(cmd_remote(argv))
     simple = {"serve": cmd_serve, "squad": cmd_squad, "kudos": cmd_kudos, "card": cmd_card,
-              "sound": cmd_sound}
+              "sound": cmd_sound, "forget": cmd_forget}
     if argv and argv[0] in simple:
         sys.exit(simple[argv[0]](argv[1:]) or 0)
     joined, first_seconds = "", None
