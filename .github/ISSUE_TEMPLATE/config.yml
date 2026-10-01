@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Contributing guide
+    url: https://github.com/kimathikim/promo/blob/main/CONTRIBUTING.md
+    about: Setup, where things live in the code, and what makes a good PR.
