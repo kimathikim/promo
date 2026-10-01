@@ -57,6 +57,7 @@ Elsewhere:
 | `api/squad.js` | the squad API on Vercel; same protocol and rules as `promo serve` |
 | `api/contributors.js` | the "Built by" section |
 | `scripts/dev.js` | local stand-in for Vercel |
+| `scripts/demo.py` | renders `docs/demo.gif` from the real UI |
 
 If you change the squad protocol or its rules, change both `api/squad.js` and
 `SquadStore` in `promo.py`, so self-hosted and hosted squads behave the same.
@@ -73,6 +74,8 @@ for f in public/app.js api/*.js; do node --check "$f"; done
 
 Then try your change for real: run a short session, open `promo stats`, or
 load the site. For UI changes, include a screenshot or a short GIF.
+If you change how the timer looks, regenerate the README's GIF with
+`python3 scripts/demo.py` (needs `pip install playwright pillow`).
 
 ## Style
 
