@@ -159,7 +159,14 @@ With `keymaps = true`: `<leader>po` open/hide, `<leader>pp` pause/resume, `<lead
 
 ### XP, levels and achievements
 
-Each focus session earns XP: minutes × your focus rating (Distracted 0.5×, Normal 1×, Focused 1.25×, Flow 1.5×), plus 10% per combo step (up to 50%). Levels run *Intern → Junior Dev → Mid-level Dev → Senior Dev → Staff Engineer → Principal Engineer → Distinguished Engineer → 10x Engineer → Blazingly Fast*. Everything is computed from your session log, so nothing extra is stored. `promo stats` shows your level, best combo and achievements; `--no-game` hides it all.
+Each focus session earns XP: minutes × your focus rating (Distracted 0.5×, Normal 1×, Focused 1.25×, Flow 1.5×), plus 10% per combo step (up to 50%). Levels run *Intern → Junior Dev → Mid-level Dev → Senior Dev → Staff Engineer → Principal Engineer → Distinguished Engineer → 10x Engineer → Blazingly Fast*. Everything is computed from your session log, so nothing extra is stored.
+
+The game is built to reward sustainable focus, not grinding:
+
+- **Rest counts.** Take at least 80% of a break and it earns its minutes in XP.
+- **8 hours a day is the ceiling.** Focus past 8h in a day still shows in your stats but earns no XP.
+- **Streaks forgive a day off.** Miss one day in any 7 and your streak keeps going (`rest_days = 1` in the config; `0` makes it strict, max `3`). `promo stats` shows how many rest days you have left. *On Fire* still needs 7 real days in a row.
+- **Combos only add.** Breaking a combo resets the bonus, never your XP. `promo stats` shows your level, best combo and achievements; `--no-game` hides it all.
 
 ### Hooks
 
@@ -295,6 +302,7 @@ volume = 0.7
 git = true
 title = true
 game = true               ; XP, levels, combos, achievements
+rest_days = 1             ; missed days per week that don't break a streak (0-3)
 spicy = false             ; commentary with attitude
 status_format = {icon} {time}
 ```
