@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.7"
+# dependencies = ["rich>=12"]
+# ///
 """PROmodoro - a progressive Pomodoro timer for developers.
 
 Each focus session is followed by a rating of how focused you were, and the
@@ -54,6 +58,8 @@ try:
 except ImportError:  # Windows: timer still runs, keyboard controls are disabled
     termios = None
     tty = None
+
+__version__ = "1.0.0"
 
 
 def _xdg(var: str, fallback: str) -> str:
@@ -2495,6 +2501,7 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
                         "`promo 25 fix login` = 25 minutes, `promo 1 30` = 1h30")
     p.add_argument("-t", "--task", dest="task_opt", metavar="TASK",
                    help="what you are working on")
+    p.add_argument("-V", "--version", action="version", version=f"promo {__version__}")
     common_options(p, cfg)
     p.add_argument("--long-break-after", type=int, metavar="MIN",
                    default=int(cfg.get("long_break_after", 180)),

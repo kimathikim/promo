@@ -6,3 +6,8 @@ lua
 mini.lua
 docs
 scripts
+pyproject.toml
+.github
+build
+dist
+*.egg-info

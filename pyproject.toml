@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "promo-cli"
+dynamic = ["version"]
+description = "Honest focus time for developers: a flip-clock Pomodoro timer for your terminal, with squads."
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [{ name = "Brian Kimathi" }]
+keywords = ["pomodoro", "focus", "timer", "terminal", "tui", "productivity", "cli"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: POSIX",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3",
+  "Topic :: Utilities",
+]
+dependencies = ["rich>=12"]
+
+[project.urls]
+Homepage = "https://promo-seven-virid.vercel.app"
+Source = "https://github.com/kimathikim/promo"
+Issues = "https://github.com/kimathikim/promo/issues"
+
+[project.scripts]
+promo = "promo:main"
+
+[tool.setuptools]
+py-modules = ["promo"]
+
+[tool.setuptools.dynamic]
+version = { attr = "promo.__version__" }
