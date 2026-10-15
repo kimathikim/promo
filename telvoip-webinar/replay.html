@@ -4,87 +4,109 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Replay · Telvoip Live</title>
-  <meta name="description" content="Watch or listen to Telvoip Live: From Ringing to Resolved. Audio-only replay and chaptered transcript.">
-  <meta name="theme-color" content="#0f1915">
+  <meta name="description" content="Replay of Telvoip Live: Every Conversation Is Revenue, with chapters, an engagement curve and an AI summary.">
+  <meta name="theme-color" content="#0f0016">
   <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap">
   <link rel="stylesheet" href="assets/webinar.css">
   <script src="assets/config.js" defer></script>
   <script src="assets/webinar.js" defer></script>
 </head>
 <body data-page="replay">
   <a class="skip" href="#main">Skip to content</a>
-  <div class="wrap">
-    <header class="topbar">
-      <a class="brand" href="./" aria-label="Telvoip Live home">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#16b873"/><path d="M7 16h3l2.5-6 4 12 3-9 2 3H25" fill="none" stroke="#04130c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Telvoip <small>Live</small>
-      </a>
-      <span class="spacer"></span>
-      <button class="lite-toggle" type="button" data-lite-toggle aria-pressed="false" title="Text-first page, audio replay by default">
-        <span class="dot" aria-hidden="true"></span> Lite line<span class="lbl-long">&nbsp;· save data</span>
-      </button>
-    </header>
+  <div class="night">
+    <div class="wrap">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Telvoip Live home">
+          <span class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="#1a0b24" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h3l2-5 4 10 2-5h3"/></svg></span>
+          Telvoip <small>Live</small>
+        </a>
+        <ol class="journey" aria-label="Your webinar journey">
+          <li data-step="connect"><a href="./"><b>01</b> Connect</a></li>
+          <li data-step="engage" class="done"><a href="live.html"><b>02</b> Engage</a></li>
+          <li data-step="resolve" aria-current="step"><a href="replay.html"><b>03</b> Resolve</a></li>
+        </ol>
+        <span class="spacer-m"></span>
+        <button class="saver" type="button" data-saver-toggle aria-pressed="false"><span class="dot" aria-hidden="true"></span><span class="lbl">Data saver</span></button>
+      </header>
 
-    <main id="main">
-      <section class="page-head" aria-labelledby="title">
-          <p class="kicker">Replay · on demand</p>
-          <h1 id="title" data-text="title">From Ringing to Resolved</h1>
-          <p class="lede">The full hour, chaptered. Pick audio if you're on mobile data; it's the same session for a fraction of the download.</p>
-          <fieldset class="format">
-            <legend class="sr-only">Replay format</legend>
-            <label><input type="radio" name="format" value="audio" checked><b>Audio only</b><span data-size-audio>28 MB</span></label>
-            <label><input type="radio" name="format" value="video"><b>Video</b><span data-size-video>410 MB</span></label>
-          </fieldset>
-      </section>
-
-      <div class="replay-grid">
-        <section class="player" aria-label="Replay player">
-          <div class="screen">
-            <div>
-              <p class="eyebrow" data-format-label>Audio only</p>
-              <h2 data-now-chapter>Dial tone</h2>
-              <p data-replay-msg></p>
-            </div>
+      <main id="main">
+        <div class="report-head">
+          <div>
+            <p class="kicker"><span class="live">AI QA report</span> Replay · on demand</p>
+            <h1 data-text="shortTitle">Every Conversation Is Revenue</h1>
           </div>
-          <div class="controls">
-            <div class="scrub" data-scrub role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="3600" aria-valuenow="0"></div>
+          <div class="scores">
+            <div class="score"><b class="mono">60</b><span>minutes</span></div>
+            <div class="score"><b class="mono">5</b><span>chapters</span></div>
+            <div class="score"><b class="mono" data-size-audio>28 MB</b><span>audio only</span></div>
+          </div>
+        </div>
+
+        <div class="replay-grid">
+          <section class="player" aria-label="Replay player">
+            <div class="screen">
+              <div>
+                <p class="kicker" style="justify-content:center">Now playing</p>
+                <h2 data-now-chapter>Dial tone</h2>
+                <p>Set replayEmbedUrl in assets/config.js to load the recording. The engagement curve below is illustrative until the session runs.</p>
+              </div>
+            </div>
+            <div class="sentiment">
+              <svg data-sentiment role="slider" tabindex="0" aria-label="Seek through the replay" aria-valuemin="0" aria-valuemax="3600" aria-valuenow="0"></svg>
+              <div class="legend" data-legend aria-hidden="true"></div>
+            </div>
             <div class="ctrl-row">
               <button class="play" type="button" data-play aria-label="Play">
                 <svg data-icon-play viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>
                 <svg data-icon-pause hidden viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
               </button>
-              <span class="mono" data-pos>00:00 / 60:00</span>
+              <span data-pos>00:00 / 60:00</span>
               <span class="spacer"></span>
-              <span>Amber marks = chapters</span>
+              <fieldset class="format">
+                <legend class="sr-only">Replay format</legend>
+                <label><input type="radio" name="format" value="audio" checked>Audio · <span data-size-audio>28 MB</span></label>
+                <label><input type="radio" name="format" value="video">Video · <span data-size-video>410 MB</span></label>
+              </fieldset>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section aria-labelledby="h-chapters">
-          <p class="eyebrow">Chapters</p>
-          <h2 id="h-chapters">Jump to the part you need.</h2>
-          <ol class="transcript" data-transcript></ol>
-        </section>
-      </div>
-
-      <section class="band" aria-labelledby="h-next">
-        <div class="redial">
-          <div>
-            <h2 id="h-next">Catch the next one live.</h2>
-            <p>Live attendees get their questions answered first. Register once and we'll call you for the next session too.</p>
-          </div>
-          <a class="btn" href="./">Save a seat</a>
+          <section aria-labelledby="h-moments">
+            <p class="act"><b>03</b> Resolve</p>
+            <h2 id="h-moments" style="font-size:clamp(28px,3vw,40px);margin-bottom:16px">Key moments</h2>
+            <ol class="moments" data-moments></ol>
+            <div class="summary">
+              <h3>Summary</h3>
+              <ul data-summary></ul>
+            </div>
+          </section>
         </div>
-      </section>
-    </main>
-
-    <footer class="site">
-      <span>© Telvoip Limited · Nairobi</span>
-      <span class="meter" data-meter>
-        This page used <b class="v">a few KB</b> of your data
-        <span class="gauge" aria-hidden="true"><i></i></span>
-      </span>
-    </footer>
+      </main>
+    </div>
   </div>
+
+  <section class="finale" aria-labelledby="h-finale">
+    <div class="wrap">
+      <h2 class="big" id="h-finale"><span>Seen it.</span><span>Now run it</span><span>on yours.</span></h2>
+      <div class="row">
+        <p>Book a free demo and we'll set Telvoip up around your channels, your team and your customers.</p>
+        <a class="btn" data-demo href="#" target="_blank" rel="noopener">Book a free demo →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site">
+    <div class="wrap">
+      <div class="contact">
+        <span>© Telvoip Limited</span>
+        <span data-address>4th Floor, Jahazi, Nairobi, Kenya</span>
+        <a data-tollfree href="#">0800 230 094</a>
+        <a data-email href="#">info@telvoip.io</a>
+      </div>
+      <span class="meter" data-meter>This page used <b class="v">a few KB</b><span class="gauge" aria-hidden="true"><i></i></span></span>
+    </div>
+  </footer>
 </body>
 </html>

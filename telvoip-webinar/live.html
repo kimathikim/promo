@@ -4,31 +4,42 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Live Room · Telvoip Live</title>
-  <meta name="description" content="The Telvoip Live room: stream, speaker test and Q&amp;A queue.">
-  <meta name="theme-color" content="#0f1915">
+  <meta name="description" content="The Telvoip Live room: stream, speaker test and an omnichannel Q&amp;A inbox.">
+  <meta name="theme-color" content="#0f0016">
   <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap">
   <link rel="stylesheet" href="assets/webinar.css">
   <script src="assets/config.js" defer></script>
   <script src="assets/webinar.js" defer></script>
 </head>
-<body data-page="live">
+<body data-page="live" class="night">
   <a class="skip" href="#main">Skip to content</a>
   <div class="wrap">
     <header class="topbar">
       <a class="brand" href="./" aria-label="Telvoip Live home">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#16b873"/><path d="M7 16h3l2.5-6 4 12 3-9 2 3H25" fill="none" stroke="#04130c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="#1a0b24" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h3l2-5 4 10 2-5h3"/></svg></span>
         Telvoip <small>Live</small>
       </a>
-      <span class="spacer"></span>
-      <button class="lite-toggle" type="button" data-lite-toggle aria-pressed="false" title="Audio and text only, no video">
-        <span class="dot" aria-hidden="true"></span> Lite line<span class="lbl-long">&nbsp;· audio only</span>
-      </button>
+      <ol class="journey" aria-label="Your webinar journey">
+        <li data-step="connect"><a href="./"><b>01</b> Connect</a></li>
+        <li data-step="engage" aria-current="step"><a href="live.html"><b>02</b> Engage</a></li>
+        <li data-step="resolve"><a href="replay.html"><b>03</b> Resolve</a></li>
+      </ol>
+      <span class="spacer-m"></span>
+      <button class="saver" type="button" data-saver-toggle aria-pressed="false" title="Audio and text only"><span class="dot" aria-hidden="true"></span><span class="lbl">Data saver</span></button>
     </header>
 
     <main id="main">
-      <h1 class="sr-only" data-text="title">From Ringing to Resolved</h1>
-      <div class="room">
-        <section class="stage" aria-label="Stream">
+      <h1 class="sr-only" data-text="shortTitle">Every Conversation Is Revenue</h1>
+      <div class="live-grid">
+        <aside class="panel runpanel" aria-labelledby="h-run">
+          <header><h2 id="h-run">Run order</h2><span>your time</span></header>
+          <ol class="runorder" data-runorder></ol>
+        </aside>
+
+        <section class="panel stage" aria-label="Stream">
           <div class="screen" data-screen>
             <div class="countdown" data-countdown hidden role="timer" aria-label="Time until the webinar starts">
               <div><span data-cd="d">00</span><small>days</small></div><span class="sep" aria-hidden="true">:</span>
@@ -36,52 +47,39 @@
               <div><span data-cd="m">00</span><small>min</small></div><span class="sep" aria-hidden="true">:</span>
               <div><span data-cd="s">00</span><small>sec</small></div>
             </div>
-            <div data-screen-msg hidden>
-              <h2></h2>
-              <p></p>
-            </div>
+            <div data-screen-msg hidden><h2></h2><p></p></div>
           </div>
           <div class="stage-bar">
             <span class="pill" data-live-badge>Waiting room</span>
-            <span data-stage-when></span>
+            <span class="mono" style="font-size:12px;color:var(--on-plum-2)" data-stage-when></span>
             <span class="spacer"></span>
+            <div class="reactions" aria-label="React">
+              <button type="button" data-react aria-label="Fire">🔥</button>
+              <button type="button" data-react aria-label="Clap">👏</button>
+              <button type="button" data-react aria-label="Idea">💡</button>
+            </div>
             <button class="pill" type="button" data-sound-test aria-pressed="false">Test speakers</button>
-            <a class="pill" data-dial href="#">Dial in</a>
+            <a class="pill" data-tollfree href="#">Call in</a>
           </div>
         </section>
 
-        <aside class="queue" aria-labelledby="h-queue">
-          <header>
-            <h2 id="h-queue">Call queue</h2>
-            <span data-queue-count></span>
-          </header>
+        <aside class="panel inbox" aria-labelledby="h-queue">
+          <header><h2 id="h-queue">Q&amp;A inbox</h2><span data-queue-count></span></header>
           <ol data-queue aria-live="polite"></ol>
           <form data-ask>
             <label class="sr-only" for="ask">Ask a question</label>
             <input id="ask" maxlength="280" placeholder="Ask the speakers…" autocomplete="off">
-            <button class="btn" type="submit">Ask</button>
+            <button class="btn small" type="submit">Ask</button>
           </form>
         </aside>
       </div>
-
-      <section class="band" aria-labelledby="h-agenda">
-        <div class="wave">
-          <div class="wave-meta"><span id="h-agenda">Running order</span><span data-wave-range></span></div>
-          <div class="wave-track" data-wave role="group" aria-label="Agenda segments"></div>
-          <div class="wave-axis" data-wave-axis aria-hidden="true"></div>
-          <div class="wave-detail" data-wave-detail aria-live="polite"><span class="clock"></span><h3></h3><p></p></div>
-          <ol class="chapters" data-chapters></ol>
-        </div>
-      </section>
     </main>
-
-    <footer class="site">
-      <span>Not registered? <a href="./">Save a seat</a> to get the replay.</span>
-      <span class="meter" data-meter>
-        This page used <b class="v">a few KB</b> of your data
-        <span class="gauge" aria-hidden="true"><i></i></span>
-      </span>
-    </footer>
   </div>
+  <footer class="site">
+    <div class="wrap">
+      <div class="contact"><span>Not registered? <a href="./#connect">Take a seat</a> to get the replay.</span></div>
+      <span class="meter" data-meter>This page used <b class="v">a few KB</b><span class="gauge" aria-hidden="true"><i></i></span></span>
+    </div>
+  </footer>
 </body>
 </html>

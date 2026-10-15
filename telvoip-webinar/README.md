@@ -1,31 +1,22 @@
 # Telvoip Live: webinar pages
 
-A landing page and its follow-on pages for Telvoip webinars, built on the [On the Line design standard](docs/DESIGN-STANDARD.md). See also the [research and competitor comparison](docs/RESEARCH.md).
+**Connect. Engage. Resolve.** A webinar journey built from Telvoip's own product patterns. See the [design standard](docs/DESIGN-STANDARD.md) and the [research and sources](docs/RESEARCH.md).
 
-| Page | File | What it is |
+| Act | File | What it is |
 |---|---|---|
-| Landing | `index.html` | The webinar rings; answer to register through a one-question-at-a-time IVR with a keypad |
-| Confirmed | `confirmed.html` | Call ticket with extension, calendar files, WhatsApp share, pre-call checklist |
-| Live room | `live.html` | Countdown, speaker test, stream embed, Q&A call queue. `?state=pre\|live\|ended` previews each state |
-| Replay | `replay.html` | Audio/video choice with sizes, waveform scrubber, chapter list |
+| 01 Connect | `index.html` | Live switchboard hero; register by chatting in a mock Telvoip inbox while your Customer 360° builds and AI QA scores the chat; routed agenda; client proof |
+| Ticket | `confirmed.html` | Your registration as a resolved ticket: ID, timeline, CSAT, calendar, WhatsApp share, checklist |
+| 02 Engage | `live.html` | Agent-console live room: run order, countdown/stream, speaker test, reactions, omnichannel Q&A queue. `?state=pre\|live\|ended` previews each state |
+| 03 Resolve | `replay.html` | Replay as an AI QA report: engagement curve scrubber, key moments, AI summary, audio/video sizes, Book a demo |
 
-No build step and no dependencies: plain HTML, CSS and JS. About 45 KB per page and no web fonts.
+Plain HTML/CSS/JS, no build step. The display font comes from Google Fonts; everything else is local.
 
-## Run it
+## Run
 
 ```sh
-cd telvoip-webinar
-python3 -m http.server 8080   # then open http://localhost:8080
+cd telvoip-webinar && python3 -m http.server 8080
 ```
 
-## Run the next webinar
+## Configure
 
-All content is in **`assets/config.js`**: title, start time (UTC), zones, agenda, speakers, outcomes, FAQ, dial-in, WhatsApp number, stream and replay URLs. Values marked `TODO` are placeholders to confirm before launch:
-
-- `startUTC`, the speakers, `dialIn` and `whatsappNumber`
-- `registerEndpoint`: the URL the form POSTs to, as JSON (CRM or marketing automation). While it's empty, registrations are kept only in the visitor's browser (demo mode).
-- `streamEmbedUrl` and `replayEmbedUrl`
-
-## Deploy
-
-The folder is self-contained, so it can go on any static host (Vercel, Netlify, S3, Cloudflare Pages). Set the host's output or root directory to `telvoip-webinar`. It's listed in the repo's `.vercelignore` so it doesn't ship with the promo leaderboard.
+All content lives in `assets/config.js`. Confirm the `TODO`s before launch: the date, the speakers, the WhatsApp number, the SMS number, `registerEndpoint` (where registrations POST as JSON; empty means demo mode, kept in the browser only), and the stream and replay URLs. Also swap in the official logo SVG (the header `.glyph` and `assets/mark.svg`) and confirm the brand colours and font with marketing.

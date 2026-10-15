@@ -2,23 +2,28 @@
  * Telvoip Live: every piece of webinar content lives here.
  * Change this file to run the next webinar; the four pages read from it.
  *
+ * Sources for the copy (see docs/RESEARCH.md):
+ *  - Telvoip eFlyer (Aug 2026): tagline, channels, pillars, client list, contacts
+ *  - "Customer Experience as a Revenue Engine" (telvoip.io, Aug 2025): topic, ROI triad
+ *  - telvoip.io blog case write-ups: anonymised customer outcomes
+ *  - telvoip.io transport & logistics page: testimonial
+ *
  * Anything marked TODO is a placeholder that must be confirmed before launch.
  */
 window.WEBINAR = {
   brand: "Telvoip",
   series: "Telvoip Live",
-  slug: "ringing-to-resolved",
+  tagline: ["Connect.", "Engage.", "Resolve."],
+  slug: "every-conversation-is-revenue",
 
-  title: "From Ringing to Resolved",
+  title: "Every conversation is revenue.",
+  shortTitle: "Every Conversation Is Revenue",
   subtitle:
-    "How African support and sales teams run one inbox for voice, WhatsApp, SMS and email, and let AI pick up the calls nobody is free to answer.",
+    "How African businesses turn calls, WhatsApps, emails and DMs into retention, upsell and referrals, run live on one Telvoip dashboard.",
 
-  // Start time in UTC. The pages render it in each visitor's zone and in the
-  // four zones our customers work in.
   startUTC: "2026-11-12T08:00:00Z", // TODO confirm: Thu 12 Nov 2026, 11:00 EAT
   durationMin: 60,
 
-  // Zones shown on every time readout, in display order.
   zones: [
     { city: "Nairobi", tz: "Africa/Nairobi" },
     { city: "Lagos", tz: "Africa/Lagos" },
@@ -26,87 +31,120 @@ window.WEBINAR = {
     { city: "Accra", tz: "Africa/Accra" },
   ],
 
-  // Where the registration form POSTs (JSON). Leave empty to run the pages
-  // as a front-end demo: the registrant is kept in this browser only.
+  // Where the registration POSTs (JSON). Empty = front-end demo mode.
   registerEndpoint: "", // TODO: CRM / marketing automation webhook
 
-  // Phone-first ways in, for people who'd rather not fill a form.
-  dialIn: "+254 800 230 094", // TODO confirm audio-only bridge number
-  whatsappNumber: "254700000000", // TODO real WhatsApp Business number, digits only
-  whatsappKeyword: "LIVE",
+  // Real Telvoip contacts (eFlyer).
+  tollFree: "0800 230 094",
+  email: "info@telvoip.io",
+  salesEmail: "sales@telvoip.io",
+  address: "4th Floor, Jahazi, Nairobi, Kenya",
+  demoUrl: "http://calendar.app.google/8Xpic4cdsHNmQdDK8",
+  site: "https://www.telvoip.io",
 
-  // Stream and replay. Empty values show a styled placeholder.
-  streamEmbedUrl: "", // TODO e.g. YouTube/Vimeo/Zoom embed URL for the live room
+  whatsappNumber: "254700000000", // TODO real WhatsApp Business number, digits only
+  smsNumber: "", // TODO short code or number for SMS sign-up
+  keyword: "LIVE",
+
+  streamEmbedUrl: "", // TODO
   replayEmbedUrl: "", // TODO
   replayAudioSizeMB: 28,
   replayVideoSizeMB: 410,
 
-  // What attendees leave with. Rendered as an IVR menu.
+  // The six channels from the eFlyer. Used by the switchboard and the inbox rail.
+  channels: [
+    { id: "voice", label: "Voice", color: "#FF5C00" },
+    { id: "whatsapp", label: "WhatsApp", color: "#25D366" },
+    { id: "email", label: "Email", color: "#99D3FF" },
+    { id: "messenger", label: "Messenger", color: "#B18CFF" },
+    { id: "instagram", label: "Instagram", color: "#FF7AB6" },
+    { id: "webchat", label: "Webchat", color: "#FFD08A" },
+  ],
+
+  // Switchboard traffic: industries from the eFlyer, no real customer conversations.
+  traffic: [
+    { ch: "voice", text: "Microfinance · loan balance query" },
+    { ch: "whatsapp", text: "Pharmacy · is my order ready?" },
+    { ch: "email", text: "Travel · change my booking" },
+    { ch: "webchat", text: "Retail · size exchange" },
+    { ch: "messenger", text: "Hospitality · table for six" },
+    { ch: "instagram", text: "Florist · bulk order quote" },
+    { ch: "voice", text: "Ride-hailing · driver ETA" },
+    { ch: "whatsapp", text: "Fintech · M-Pesa reversal" },
+    { ch: "email", text: "Logistics · proof of delivery" },
+    { ch: "voice", text: "Healthcare · appointment slot" },
+  ],
+
+  // The ROI triad from "Customer Experience as a Revenue Engine".
   outcomes: [
     {
-      key: "1",
-      title: "One inbox, every channel",
-      body: "See how a single agent view handles a call, a WhatsApp thread and an email from the same customer without losing context.",
+      word: "Retain",
+      title: "Stop losing customers in the gaps between channels",
+      body: "Watch one customer move from a call to WhatsApp to email without repeating themselves, and see what that does to churn.",
     },
     {
-      key: "2",
-      title: "AI that answers after hours",
-      body: "Watch a voice assistant pick up at 21:00, answer from your knowledge base, and hand a real problem to a human with the full history.",
+      word: "Upsell",
+      title: "Turn a support call into the next sale",
+      body: "Use the 360° customer view and AI summaries to spot the moment a question becomes a buying signal.",
     },
     {
-      key: "3",
-      title: "Payments inside the conversation",
-      body: "Walk through an M-Pesa and Airtel Money workflow that confirms a payment while the customer is still on the line.",
-    },
-    {
-      key: "4",
-      title: "Calls that hold on a weak network",
-      body: "What actually keeps call quality up on low bandwidth, and how local numbers in Kenya, Nigeria, South Africa and Uganda change pick-up rates.",
+      word: "Advocate",
+      title: "Make CSAT and NPS predict revenue",
+      body: "Score every interaction with AI QA, and treat satisfaction as an early warning system, not a vanity number.",
     },
   ],
 
-  // Agenda. Minutes must add up to durationMin. Each chapter becomes a
-  // segment of the waveform timeline.
-  agenda: [
-    { min: 5, title: "Dial tone", body: "Why customers stop picking up, and what they do instead." },
-    { min: 15, title: "One inbox, live", body: "A real agent shift across voice, WhatsApp, SMS and email.", speaker: 0 },
-    { min: 15, title: "After-hours AI", body: "Voice assistant + knowledge base + clean human handoff.", speaker: 1 },
-    { min: 10, title: "Pay on the call", body: "Mobile-money confirmation without leaving the conversation.", speaker: 0 },
-    { min: 15, title: "Open line", body: "Your questions, answered live. Sent ones go first.", speaker: 2 },
-  ],
-
-  // TODO: real speakers. Initials are generated from the name.
-  speakers: [
-    { name: "Speaker One", role: "Head of Product, Telvoip", city: "Nairobi", tz: "Africa/Nairobi" },
-    { name: "Speaker Two", role: "AI & Voice Lead, Telvoip", city: "Nairobi", tz: "Africa/Nairobi" },
-    { name: "Guest Speaker", role: "Customer Experience Director", city: "Lagos", tz: "Africa/Lagos" },
-  ],
-
-  // Role question, answered with the keypad.
+  // Who's calling? Roles route the agenda.
   roles: [
-    { key: "1", label: "I run a contact centre or support team" },
-    { key: "2", label: "I lead a sales team" },
-    { key: "3", label: "I work in IT or telecoms" },
-    { key: "4", label: "I'm a founder or executive" },
-    { key: "0", label: "Something else" },
+    { id: "cx", label: "Contact centre / support lead" },
+    { id: "sales", label: "Sales or collections lead" },
+    { id: "exec", label: "Founder or executive" },
+    { id: "it", label: "IT or telecoms" },
   ],
+
+  // Agenda as an IVR journey. `for` lists the roles each segment is built for.
+  agenda: [
+    { min: 5, title: "Dial tone", body: "Why customer experience is a revenue line, not a cost centre.", for: ["exec", "cx", "sales"] },
+    { min: 15, title: "One dashboard, live", body: "A real shift across voice, WhatsApp, email and social, from one login.", speaker: 0, for: ["cx", "it"] },
+    { min: 15, title: "Revenue moments", body: "Spotting upsell and retention signals with the 360° view and AI summaries.", speaker: 1, for: ["sales", "exec"] },
+    { min: 10, title: "AI QA", body: "Transcribe, score sentiment and auto-evaluate every interaction.", speaker: 1, for: ["cx", "exec"] },
+    { min: 15, title: "Open line", body: "Your questions, answered live. Questions sent at registration go first.", speaker: 2, for: ["cx", "sales", "exec", "it"] },
+  ],
+
+  // TODO: real speakers.
+  speakers: [
+    { name: "Speaker One", role: "Head of Product, Telvoip", city: "Nairobi", tz: "Africa/Nairobi", skills: ["Omnichannel", "IVR"] },
+    { name: "Speaker Two", role: "AI & Insights Lead, Telvoip", city: "Nairobi", tz: "Africa/Nairobi", skills: ["AI QA", "Analytics"] },
+    { name: "Guest Speaker", role: "Customer Experience Director", city: "Lagos", tz: "Africa/Lagos", skills: ["CX strategy"] },
+  ],
+
+  // "Trusted by leading businesses across industries" (eFlyer).
+  clients: [
+    "Choice Microfinance Bank", "Omega Blooms", "Oracom Web Services", "Pharmily", "EnovePay Technologies",
+    "Sunshine Travels & Tours", "Wasili Cabs", "BuySimu Technologies", "MPost Global", "Expertech Electricals",
+  ],
+
+  // Outcomes as published in Telvoip's blog case write-ups (customers not named there).
+  // `from`/`to` drive the before/after meter; `unit` is shown on both.
+  results: [
+    { who: "E-commerce", metric: "Average wait", from: 180, to: 90, unit: "sec", note: "and first-call resolution up 35%, after skills-based routing" },
+    { who: "Telecom · Kenya", metric: "Response time", from: 300, to: 120, unit: "sec", note: "after centralising every channel" },
+    { who: "Fintech · South Africa", metric: "Peak wait", from: 100, to: 50, unit: "%", note: "halved with real-time routing and analytics" },
+    { who: "Logistics · Kenya", metric: "Calls handled", from: 100, to: 130, unit: "%", note: "30% more calls on 20% lower staffing cost" },
+    { who: "Remittance", metric: "Response time", from: 100, to: 65, unit: "%", note: "35% faster by unifying calls, SMS and WhatsApp" },
+  ],
+
+  testimonial: {
+    quote: "Choosing Telvoip for our call centre needs has been one of the best decisions we've made. Their services have revolutionised the way we interact with our customers.",
+    name: "Shanya Jodie",
+    source: "telvoip.io",
+  },
 
   faq: [
-    {
-      q: "Is it free?",
-      a: "Yes. Registration is free and the replay is free.",
-    },
-    {
-      q: "I have a weak connection. Can I still attend?",
-      a: "Yes. Switch on Lite line (top right) for a text-only page, dial in for audio only, or take the audio replay, which is a fraction of the size of the video.",
-    },
-    {
-      q: "Will there be a recording?",
-      a: "Everyone who registers gets the replay, the transcript and the slides within 24 hours.",
-    },
-    {
-      q: "Do I need to be a Telvoip customer?",
-      a: "No. The session is for anyone running customer conversations in Africa, whatever system they use today.",
-    },
+    { q: "Is it free?", a: "Yes. Registration and the replay are free." },
+    { q: "Do I need to be a Telvoip customer?", a: "No. It's for anyone whose business talks to customers, whatever system you use today. As the eFlyer says: any industry, any size." },
+    { q: "I'm on a weak connection. Can I still take part?", a: "Yes. Switch on Data saver (top right) for a lighter page, call " + "0800 230 094" + " to listen, or take the audio replay, a fraction of the size of the video." },
+    { q: "Will there be a recording?", a: "Everyone who registers gets the replay, an AI summary and the slides within 24 hours." },
+    { q: "Can I see Telvoip on my own use case?", a: "Yes. Book a free demo after the session and we'll set it up around your channels and team." },
   ],
 };

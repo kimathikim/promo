@@ -1,67 +1,61 @@
-# The "On the Line" standard
+# The "Product as the Page" standard
 
-Telvoip sells conversations, so the webinar pages are designed as one. Each page is a step in a phone call: **ring → answer → connected → live → replay**. Six rules make up the standard. Each one answers a gap from [RESEARCH.md](RESEARCH.md), and each can be reused beyond webinars (product launches, events, demos).
+**Rule zero:** a Telvoip marketing page never just describes the product. It *is* the product, scaled down to the job of the page. Visitors use Telvoip before they know they're being sold to.
 
-## 1. Registration is a call, not a form
+The webinar follows the brand tagline as a three-act journey shown in the header of every page:
 
-The page rings. Visitors **answer** to register, and an IVR asks one question at a time. Answered questions fold into a call log ("✓ Email · amina@…  change") so nothing is lost. A call timer runs, and the confirmation page tells people how long registration took.
+| Act | Page | The product pattern it borrows |
+|---|---|---|
+| 01 **Connect** | `index.html` | Unified inbox, Customer 360°, AI QA, omnichannel rail |
+| (handoff) | `confirmed.html` | A support ticket resolved on first contact, with CSAT |
+| 02 **Engage** | `live.html` | Agent console: run order, stage, Q&A as an omnichannel queue |
+| 03 **Resolve** | `replay.html` | AI QA report: engagement curve, key moments, AI summary |
 
-- One question per screen, in plain words ("Who's on the line?").
-- Enter continues, `#` skips optional steps, and `*` goes back.
-- Multiple-choice questions use a **real keypad**. Number keys on a keyboard press the same buttons, and options are numbered like a phone menu.
-- Without JavaScript it's a plain form with every field visible (progressive enhancement).
+## The six patterns
 
-*Replaces:* the 6-field form on the right of the hero.
+### 1. The switchboard (hero)
+Six channel nodes (Voice, WhatsApp, Email, Messenger, Instagram, Webchat) send live pulses into one orange "1 dashboard" node, which feeds "Resolved". A counter shows how many conversations were unified since you arrived, and a ticker names each one by industry (never by a real customer). It turns "6+ channels, one login" into something you can see. It pauses offscreen and under Data saver.
 
-## 2. Every page shows what it cost you
+### 2. Register by conversation
+There's no form. A chat with the Telvoip Live desk asks seven questions: name, email, company, role, channels, WhatsApp number and a question. Quick-reply chips are used for choices, with validation inline in the chat. A handle-time clock runs in the thread header.
 
-A **data meter** in the footer shows how much data the visit used, measured with the browser's Performance API, against a typical 2 MB page. Each "way in" lists its cost up front: video ~400 MB/hr, dial-in no data, WhatsApp a few KB, audio replay ~28 MB.
+### 3. Your own Customer 360°
+As you answer, a profile panel fills in (avatar, email, company, role, channels, mobile, local time, source) with a highlight on each new field. Visitors see the 360° view through their own data.
 
-**Lite line** is a switch on every page. It turns off animation, decoration and video and leaves the text: the waveform becomes a chapter list and the replay defaults to audio. It turns itself on when the browser reports Save-Data or a 2G connection.
+### 4. AI QA on your own conversation
+When the chat closes, the panel scores it: sentiment, customer effort (a plain heuristic: seconds per reply), first-contact resolution and handle time. It's Telvoip's "Call Recording & AI QA" feature, applied to the visitor.
 
-*Replaces:* pages that assume fibre and never say what they cost to load.
+### 5. A routed agenda (IVR)
+"Who's calling? Press 1–4." Picking a role routes the agenda: matching segments light up orange, others dim, and you get "Your must-watch: … (35 of 60 min)". Your role from registration routes it automatically next time.
 
-## 3. Always a phone-first way in
+### 6. Proof as before → after meters
+The client list from the eFlyer runs as a marquee. The blog's anonymised outcomes animate as before/after bars, with a line saying where they come from. Testimonials are real quotes from telvoip.io only. Nothing is made up; sample Q&A items are labelled "Sample".
 
-Every page offers a way in that needs no laptop: register by WhatsApp keyword, dial in for audio only, get reminders on WhatsApp, and share by WhatsApp link. Your seat number is an **extension** (EXT 6568) you quote when you dial in.
-
-## 4. Time is local and multi-zone
-
-Start times show in a row for Nairobi, Lagos, Johannesburg and Accra, plus the visitor's own zone if it's different, highlighted. The agenda and the ticket also show times in the visitor's zone. Speakers show their **current local time** and whether they're in working hours, like a contact card.
-
-## 5. The agenda is a waveform
-
-The hour is drawn as an audio waveform, and each segment's width is its length in minutes. Hover or tab through it to see each part. The replay page reuses the same waveform as its scrubber, with chapter marks in amber. Bar heights are seeded so every visitor sees the same shape.
-
-*Replaces:* "What you'll learn" bullets.
-
-## 6. Every step after registering gets the same design care
-
-- **Confirmed:** a call ticket (extension, date, your time and EAT/WAT, dial-in), an .ics file with a 15-minute alarm, Google Calendar, WhatsApp share, your queued question, and a checklist this browser remembers.
-- **Live room:** a countdown, a **speaker test** that plays a ringback tone generated in the browser (nothing downloaded), and Q&A as a **call queue** ranked by votes. Questions sent while registering appear in it.
-- **Replay:** choose audio or video with the size shown, a waveform scrubber, and chapters you can click.
-
-## Visual language
+## Brand tokens
 
 | Token | Value | Use |
 |---|---|---|
-| `--line` | `#0f1915` | "On the line" surfaces: phone, ticket, stage, waveform |
-| `--paper` | `#f5f2eb` | Page background (warm, not white) |
-| `--signal` | `#16b873` | Answer, connected, primary action |
-| `--ring` | `#ff5b35` | Ringing and live only |
-| `--amber` | `#e9a825` | Waveform highlight and chapters |
+| `--orange` | `#FF5C00` | Primary actions, "1 dashboard", highlights. Text on orange is ink `#1A0B24`, not white (contrast). |
+| `--purple` | `#6C0096` | Secondary: chat bubbles, act labels, the Upsell card, the quote |
+| `--sky` | `#99D3FF` | Accent: the Advocate card, AI labels, selected format |
+| `--plum-950` | `#0F0016` | "Night" surfaces: hero, live room, report |
+| `--paper` | `#FBF8F4` | Light sections |
 
-- **Type:** system sans for words and system mono for numbers, times and labels. No web fonts, so no font download.
-- **Shape:** large radii for "device" surfaces (28px), pill buttons, and dashed perforations for anything you keep, like the ticket.
-- **Motion:** used only where a call would move: the ring pulse, the answer nudge, the connecting bars. All of it is off under Lite line or `prefers-reduced-motion`.
-- **Dark mode:** follows the system setting; the tokens swap.
-- **No fabricated social proof:** no logo strips or testimonials until real ones exist. Sample Q&A items are labelled "Sample".
+- **Type:** Bricolage Grotesque (display, 800, tight tracking), system sans for body, system mono for times, IDs and labels.
+- **Shapes:** product-UI cards (18–28px radii), pills for actions and chips, a dashed timeline for ticket history.
+- **Motion:** only where the product moves: pulses on the switchboard, typing dots, field highlights, filling meters, reactions. All of it is off under Data saver or `prefers-reduced-motion`.
+- **Dark mode:** light sections follow the system setting; night sections stay dark.
 
-## Checklist for a new page in this standard
+## Always on
 
-- [ ] Can someone take part with only a phone?
-- [ ] Does it show what it costs in data, and does Lite line still read well?
-- [ ] Is every time in the visitor's zone plus EAT/WAT?
-- [ ] Does any multiple-choice question use the keypad?
-- [ ] Does it work without JavaScript?
-- [ ] Does it fit at 390px wide with no sideways scroll?
+- A way in on every channel: WhatsApp keyword, toll-free 0800 230 094, SMS (when configured), email.
+- Times shown for Nairobi, Lagos, Johannesburg and Accra, plus the visitor's own zone.
+- Data saver toggle and a footer meter showing what the page cost in KB.
+- Works at 390px wide with no sideways scroll; the chat falls back to a plain form without JavaScript.
+
+## Checklist for the next page in this standard
+
+- [ ] Which Telvoip feature does this page *perform*, not describe?
+- [ ] Is every claim traceable to Telvoip's own material?
+- [ ] Can someone take part from a phone, on any channel?
+- [ ] Does it work in Data saver and without JavaScript?
