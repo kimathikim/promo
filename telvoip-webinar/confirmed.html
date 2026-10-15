@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seat Confirmed · Telvoip Live</title>
+  <meta name="description" content="Your seat for Telvoip Live is saved.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0f1915">
+  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/webinar.css">
+  <script src="assets/config.js" defer></script>
+  <script src="assets/webinar.js" defer></script>
+</head>
+<body data-page="confirmed">
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Telvoip Live home">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#16b873"/><path d="M7 16h3l2.5-6 4 12 3-9 2 3H25" fill="none" stroke="#04130c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Telvoip <small>Live</small>
+      </a>
+      <span class="spacer"></span>
+      <button class="lite-toggle" type="button" data-lite-toggle aria-pressed="false" title="Text-first page for slow or expensive data">
+        <span class="dot" aria-hidden="true"></span> Lite line<span class="lbl-long">&nbsp;· save data</span>
+      </button>
+    </header>
+
+    <main id="main">
+      <section class="connected" aria-labelledby="greet">
+        <div>
+          <p class="kicker"><span class="pulse decor" aria-hidden="true"></span> Call connected · seat saved</p>
+          <h1 id="greet" data-greet>You're on the line.</h1>
+          <p class="lede">Your seat is held for <span data-text="title">From Ringing to Resolved</span>. A confirmation is on its way to <b data-sent-to>your inbox</b>. <span data-wa-note></span></p>
+          <p class="when" data-call-length></p>
+
+          <div class="actions">
+            <button class="btn dark" type="button" data-ics>Add to calendar (.ics)</button>
+            <a class="btn ghost" data-gcal href="#" target="_blank" rel="noopener">Google Calendar</a>
+          </div>
+          <div class="actions">
+            <a class="btn ghost" data-share-wa href="#" target="_blank" rel="noopener">Share on WhatsApp</a>
+            <button class="btn ghost" type="button" data-copy>Copy invite link</button>
+          </div>
+
+          <div class="queued" data-queued hidden>
+            <p class="eyebrow">Your question is in the queue</p>
+            <q></q>
+            <p class="when">Sent questions are answered first in the Open line segment.</p>
+          </div>
+        </div>
+
+        <div>
+          <article class="ticket" aria-label="Your seat">
+            <div class="tk-top">
+              <span class="tk-label">Telvoip Live · your extension</span>
+              <div class="tk-ext" data-ext>EXT ----</div>
+              <span class="tk-label">Quote this if you dial in</span>
+              <div class="tk-title" data-text="title">From Ringing to Resolved</div>
+            </div>
+            <div class="tk-perf" aria-hidden="true"></div>
+            <div class="tk-grid">
+              <div><span>Date</span><b data-tk-date>-</b></div>
+              <div><span>Your time</span><b data-tk-time>-</b></div>
+              <div><span>East &amp; West Africa</span><b data-tk-eat>-</b></div>
+              <div><span>Audio only</span><b><a data-dial href="#"></a></b></div>
+            </div>
+          </article>
+          <div class="actions">
+            <a class="btn" href="live.html">Test your line in the live room →</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" aria-labelledby="h-check">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Before we go live</p>
+            <h2 id="h-check">Three minutes now saves the first ten.</h2>
+          </div>
+          <p>Ticks are saved in this browser so you can come back to the list.</p>
+        </div>
+        <ul class="checklist">
+          <li><label><input type="checkbox" data-check="cal"><div><b>Put it in your calendar</b><span>The .ics file includes a 15-minute reminder and the live room link.</span></div></label></li>
+          <li><label><input type="checkbox" data-check="sound"><div><b>Test your sound</b><span>The live room has a one-tap speaker test that downloads nothing.</span></div></label></li>
+          <li><label><input type="checkbox" data-check="team"><div><b>Bring the person who answers the phones</b><span>The live demos land best with whoever runs your queue day to day.</span></div></label></li>
+          <li><label><input type="checkbox" data-check="q"><div><b>Write down one call that went wrong</b><span>Bring it to the Open line. Real cases get real answers.</span></div></label></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="site">
+      <span>© Telvoip Limited · Nairobi</span>
+      <span class="meter" data-meter>
+        This page used <b class="v">a few KB</b> of your data
+        <span class="gauge" aria-hidden="true"><i></i></span>
+      </span>
+    </footer>
+  </div>
+</body>
+</html>

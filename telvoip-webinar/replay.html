@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Replay · Telvoip Live</title>
+  <meta name="description" content="Watch or listen to Telvoip Live: From Ringing to Resolved. Audio-only replay and chaptered transcript.">
+  <meta name="theme-color" content="#0f1915">
+  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/webinar.css">
+  <script src="assets/config.js" defer></script>
+  <script src="assets/webinar.js" defer></script>
+</head>
+<body data-page="replay">
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Telvoip Live home">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#16b873"/><path d="M7 16h3l2.5-6 4 12 3-9 2 3H25" fill="none" stroke="#04130c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Telvoip <small>Live</small>
+      </a>
+      <span class="spacer"></span>
+      <button class="lite-toggle" type="button" data-lite-toggle aria-pressed="false" title="Text-first page, audio replay by default">
+        <span class="dot" aria-hidden="true"></span> Lite line<span class="lbl-long">&nbsp;· save data</span>
+      </button>
+    </header>
+
+    <main id="main">
+      <section class="page-head" aria-labelledby="title">
+          <p class="kicker">Replay · on demand</p>
+          <h1 id="title" data-text="title">From Ringing to Resolved</h1>
+          <p class="lede">The full hour, chaptered. Pick audio if you're on mobile data; it's the same session for a fraction of the download.</p>
+          <fieldset class="format">
+            <legend class="sr-only">Replay format</legend>
+            <label><input type="radio" name="format" value="audio" checked><b>Audio only</b><span data-size-audio>28 MB</span></label>
+            <label><input type="radio" name="format" value="video"><b>Video</b><span data-size-video>410 MB</span></label>
+          </fieldset>
+      </section>
+
+      <div class="replay-grid">
+        <section class="player" aria-label="Replay player">
+          <div class="screen">
+            <div>
+              <p class="eyebrow" data-format-label>Audio only</p>
+              <h2 data-now-chapter>Dial tone</h2>
+              <p data-replay-msg></p>
+            </div>
+          </div>
+          <div class="controls">
+            <div class="scrub" data-scrub role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="3600" aria-valuenow="0"></div>
+            <div class="ctrl-row">
+              <button class="play" type="button" data-play aria-label="Play">
+                <svg data-icon-play viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>
+                <svg data-icon-pause hidden viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+              </button>
+              <span class="mono" data-pos>00:00 / 60:00</span>
+              <span class="spacer"></span>
+              <span>Amber marks = chapters</span>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="h-chapters">
+          <p class="eyebrow">Chapters</p>
+          <h2 id="h-chapters">Jump to the part you need.</h2>
+          <ol class="transcript" data-transcript></ol>
+        </section>
+      </div>
+
+      <section class="band" aria-labelledby="h-next">
+        <div class="redial">
+          <div>
+            <h2 id="h-next">Catch the next one live.</h2>
+            <p>Live attendees get their questions answered first. Register once and we'll call you for the next session too.</p>
+          </div>
+          <a class="btn" href="./">Save a seat</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site">
+      <span>© Telvoip Limited · Nairobi</span>
+      <span class="meter" data-meter>
+        This page used <b class="v">a few KB</b> of your data
+        <span class="gauge" aria-hidden="true"><i></i></span>
+      </span>
+    </footer>
+  </div>
+</body>
+</html>

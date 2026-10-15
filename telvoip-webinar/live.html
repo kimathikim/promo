@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Room · Telvoip Live</title>
+  <meta name="description" content="The Telvoip Live room: stream, speaker test and Q&amp;A queue.">
+  <meta name="theme-color" content="#0f1915">
+  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/webinar.css">
+  <script src="assets/config.js" defer></script>
+  <script src="assets/webinar.js" defer></script>
+</head>
+<body data-page="live">
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Telvoip Live home">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#16b873"/><path d="M7 16h3l2.5-6 4 12 3-9 2 3H25" fill="none" stroke="#04130c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Telvoip <small>Live</small>
+      </a>
+      <span class="spacer"></span>
+      <button class="lite-toggle" type="button" data-lite-toggle aria-pressed="false" title="Audio and text only, no video">
+        <span class="dot" aria-hidden="true"></span> Lite line<span class="lbl-long">&nbsp;· audio only</span>
+      </button>
+    </header>
+
+    <main id="main">
+      <h1 class="sr-only" data-text="title">From Ringing to Resolved</h1>
+      <div class="room">
+        <section class="stage" aria-label="Stream">
+          <div class="screen" data-screen>
+            <div class="countdown" data-countdown hidden role="timer" aria-label="Time until the webinar starts">
+              <div><span data-cd="d">00</span><small>days</small></div><span class="sep" aria-hidden="true">:</span>
+              <div><span data-cd="h">00</span><small>hrs</small></div><span class="sep" aria-hidden="true">:</span>
+              <div><span data-cd="m">00</span><small>min</small></div><span class="sep" aria-hidden="true">:</span>
+              <div><span data-cd="s">00</span><small>sec</small></div>
+            </div>
+            <div data-screen-msg hidden>
+              <h2></h2>
+              <p></p>
+            </div>
+          </div>
+          <div class="stage-bar">
+            <span class="pill" data-live-badge>Waiting room</span>
+            <span data-stage-when></span>
+            <span class="spacer"></span>
+            <button class="pill" type="button" data-sound-test aria-pressed="false">Test speakers</button>
+            <a class="pill" data-dial href="#">Dial in</a>
+          </div>
+        </section>
+
+        <aside class="queue" aria-labelledby="h-queue">
+          <header>
+            <h2 id="h-queue">Call queue</h2>
+            <span data-queue-count></span>
+          </header>
+          <ol data-queue aria-live="polite"></ol>
+          <form data-ask>
+            <label class="sr-only" for="ask">Ask a question</label>
+            <input id="ask" maxlength="280" placeholder="Ask the speakers…" autocomplete="off">
+            <button class="btn" type="submit">Ask</button>
+          </form>
+        </aside>
+      </div>
+
+      <section class="band" aria-labelledby="h-agenda">
+        <div class="wave">
+          <div class="wave-meta"><span id="h-agenda">Running order</span><span data-wave-range></span></div>
+          <div class="wave-track" data-wave role="group" aria-label="Agenda segments"></div>
+          <div class="wave-axis" data-wave-axis aria-hidden="true"></div>
+          <div class="wave-detail" data-wave-detail aria-live="polite"><span class="clock"></span><h3></h3><p></p></div>
+          <ol class="chapters" data-chapters></ol>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site">
+      <span>Not registered? <a href="./">Save a seat</a> to get the replay.</span>
+      <span class="meter" data-meter>
+        This page used <b class="v">a few KB</b> of your data
+        <span class="gauge" aria-hidden="true"><i></i></span>
+      </span>
+    </footer>
+  </div>
+</body>
+</html>

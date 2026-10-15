@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Telvoip Live Webinar</title>
+  <meta name="description" content="Telvoip Live: From Ringing to Resolved. A free 60-minute webinar on running voice, WhatsApp, SMS and email in one inbox, with AI that answers after hours.">
+  <meta name="theme-color" content="#0f1915">
+  <meta property="og:title" content="Telvoip Live · From Ringing to Resolved">
+  <meta property="og:description" content="One inbox for every channel, AI that picks up after hours, and payments inside the conversation. Free, 60 minutes, online.">
+  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/webinar.css">
+  <script src="assets/config.js" defer></script>
+  <script src="assets/webinar.js" defer></script>
+</head>
+<body data-page="landing">
+  <a class="skip" href="#call">Skip to registration</a>
+
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Telvoip Live home">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#16b873"/><path d="M7 16h3l2.5-6 4 12 3-9 2 3H25" fill="none" stroke="#04130c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Telvoip <small>Live</small>
+      </a>
+      <span class="spacer"></span>
+      <button class="lite-toggle" type="button" data-lite-toggle aria-pressed="false" title="Text-first page for slow or expensive data">
+        <span class="dot" aria-hidden="true"></span> Lite line<span class="lbl-long">&nbsp;· save data</span>
+      </button>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="title">
+        <div>
+          <p class="kicker"><span class="pulse decor" aria-hidden="true"></span> Telvoip Live · Free webinar</p>
+          <h1 id="title">From Ringing <span class="ghost">to</span> Resolved</h1>
+          <p class="lede" data-text="subtitle">How African support and sales teams run one inbox for voice, WhatsApp, SMS and email, and let AI pick up the calls nobody is free to answer.</p>
+          <p class="when" data-when>Thursday 12 November 2026 · 60 min · online</p>
+          <ul class="zones" data-zones aria-label="Start time by city">
+            <li><div class="t">11:00</div><div class="c">Nairobi</div></li>
+            <li><div class="t">09:00</div><div class="c">Lagos</div></li>
+            <li><div class="t">10:00</div><div class="c">Johannesburg</div></li>
+            <li><div class="t">08:00</div><div class="c">Accra</div></li>
+          </ul>
+        </div>
+
+        <!-- Registration: the webinar calls you, you answer, the IVR takes your details -->
+        <div class="phone" id="call" data-phone aria-label="Register for the webinar">
+          <div class="status">
+            <span data-call-state>Incoming call</span>
+            <span class="timer mono" data-call-timer aria-hidden="true">00:00</span>
+          </div>
+
+          <div class="ringing" data-ringing hidden>
+            <div class="avatar-ring" aria-hidden="true">
+              <span class="wave-ring"></span><span class="wave-ring"></span><span class="wave-ring"></span>
+              <span class="core"><svg viewBox="0 0 32 32"><path d="M5 16h4l3-8 5 16 3.5-11 2.5 3H27" fill="none" stroke="#16b873" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <span class="caller">Telvoip Live is calling</span>
+            <span class="caller-name">From Ringing to Resolved</span>
+            <span class="caller-sub" data-caller-sub>Five quick questions, about 30 seconds. Answer to save your free seat.</span>
+            <div class="call-actions">
+              <button class="call-btn later" type="button" data-ics>
+                <span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>
+                Remind me
+              </button>
+              <button class="call-btn answer" type="button" data-answer>
+                <span class="disc"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></span>
+                Answer · save my seat
+              </button>
+            </div>
+            <a class="sr-only" href="confirmed.html" data-seat-link hidden>See your seat</a>
+          </div>
+
+          <div class="ivr" data-ivr>
+            <ol class="ivr-log" data-ivr-log aria-label="Your answers so far"></ol>
+
+            <form id="register" action="confirmed.html" method="get" novalidate aria-live="polite">
+              <fieldset class="step" data-step="name" data-label="Name">
+                <legend class="prompt">Welcome to Telvoip Live. Who's on the line?</legend>
+                <p class="prompt-hint">Your full name, as it should appear on your seat.</p>
+                <label class="sr-only" for="f-name">Full name</label>
+                <input class="field" id="f-name" name="name" autocomplete="name" required data-msg="We need a name for your seat." placeholder="e.g. Amina Odhiambo">
+                <p class="field-error" role="alert"></p>
+                <div class="next-row"><button class="btn" type="button" data-next>Continue</button><span class="kbd">Enter ↵</span></div>
+              </fieldset>
+
+              <fieldset class="step" data-step="email" data-label="Email">
+                <legend class="prompt">Where should we send your seat and the replay?</legend>
+                <p class="prompt-hint">Work email works best. One confirmation, one reminder, one replay link.</p>
+                <label class="sr-only" for="f-email">Work email</label>
+                <input class="field" id="f-email" name="email" type="email" inputmode="email" autocomplete="email" required data-msg="We need an email to send your seat to." placeholder="you@company.co.ke">
+                <p class="field-error" role="alert"></p>
+                <div class="next-row"><button class="btn" type="button" data-next>Continue</button><span class="kbd">Enter ↵</span></div>
+              </fieldset>
+
+              <fieldset class="step" data-step="phone" data-label="Phone">
+                <legend class="prompt">Want the reminder on your phone instead?</legend>
+                <p class="prompt-hint">Optional. With country code. We'll only use it for this webinar.</p>
+                <label class="sr-only" for="f-phone">Mobile number</label>
+                <input class="field" id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+254 7XX XXX XXX">
+                <label class="check"><input type="checkbox" name="whatsapp" checked> Send reminders on WhatsApp</label>
+                <p class="field-error" role="alert"></p>
+                <div class="next-row"><button class="btn" type="button" data-next>Continue</button><button class="btn ghost" type="button" data-skip>Skip</button><span class="kbd">#</span></div>
+              </fieldset>
+
+              <fieldset class="step" data-step="role" data-label="Role">
+                <legend class="prompt">Which best describes you?</legend>
+                <p class="prompt-hint">Press a number on the keypad or your keyboard. <b>*</b> goes back.</p>
+                <ol class="key-menu" data-role-menu></ol>
+                <label class="sr-only" for="f-role">Your role</label>
+                <select class="field role-select" id="f-role" name="role" data-role-select required data-msg="Pick the closest match."></select>
+                <div class="keypad" data-keypad role="group" aria-label="Keypad"></div>
+                <p class="field-error" role="alert"></p>
+              </fieldset>
+
+              <fieldset class="step" data-step="question" data-label="Question">
+                <legend class="prompt">Got a question for the speakers? It jumps the queue.</legend>
+                <p class="prompt-hint">Questions sent now are answered first in the Open line segment.</p>
+                <label class="sr-only" for="f-q">Your question</label>
+                <textarea class="field" id="f-q" name="question" maxlength="280" placeholder="e.g. Can the voice assistant answer in Swahili?"></textarea>
+                <p class="field-error" role="alert"></p>
+                <div class="next-row"><button class="btn" type="submit">Save my seat</button><button class="btn ghost" type="button" data-skip>Skip</button><span class="kbd">#</span></div>
+              </fieldset>
+            </form>
+          </div>
+
+          <div class="connecting" data-connecting hidden role="status">
+            <div class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+            <strong>Connecting you…</strong>
+            <span class="caller-sub">Saving your seat.</span>
+          </div>
+
+          <div class="phone-foot">
+            <span>Prefer not to type?</span>
+            <a data-wa href="#">WhatsApp <b data-wa-keyword>LIVE</b> to register</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="band" aria-labelledby="h-menu">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">What you'll leave with</p>
+            <h2 id="h-menu">Four things you can use the next morning.</h2>
+          </div>
+          <p>Live demos on a working Telvoip account, not slides about features. Every segment ends with something your team can try that week.</p>
+        </div>
+        <ol class="menu" data-outcomes></ol>
+      </section>
+
+      <section class="band" aria-labelledby="h-agenda">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">The hour, minute by minute</p>
+            <h2 id="h-agenda">Here's the whole call before you take it.</h2>
+          </div>
+          <p>Each bar is one segment of the session, shown in your local time. Hover or tab through it to see what happens when, and skip straight to the part you care about on the replay.</p>
+        </div>
+        <div class="wave">
+          <div class="wave-meta"><span>Agenda · 60 min</span><span data-wave-range></span></div>
+          <div class="wave-track" data-wave role="group" aria-label="Agenda segments"></div>
+          <div class="wave-axis" data-wave-axis aria-hidden="true"></div>
+          <div class="wave-detail" data-wave-detail aria-live="polite">
+            <span class="clock"></span>
+            <h3></h3>
+            <p></p>
+          </div>
+          <ol class="chapters" data-chapters></ol>
+        </div>
+      </section>
+
+      <section class="band" aria-labelledby="h-speakers">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">On the line</p>
+            <h2 id="h-speakers">Who you'll hear from.</h2>
+          </div>
+          <p>The people who build and run Telvoip's contact centre platform, plus a customer who runs one every day. Local time shown so you know when they're around for follow-ups.</p>
+        </div>
+        <div class="contacts" data-speakers></div>
+      </section>
+
+      <section class="band" aria-labelledby="h-ways">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Ways in</p>
+            <h2 id="h-ways">Join on whatever connection you've got.</h2>
+          </div>
+          <p>Not everyone has fibre and a free afternoon. Pick the way in that fits your data and your day. Each one shows what it costs you.</p>
+        </div>
+        <div class="ways">
+          <article class="way">
+            <span class="cost">Video · ~400 MB / hr</span>
+            <h3>Browser</h3>
+            <p>Live video, slides and the Q&amp;A queue. Nothing to install.</p>
+            <a class="go" href="live.html">Open the live room →</a>
+          </article>
+          <article class="way">
+            <span class="cost">Audio · no data</span>
+            <h3>Dial in</h3>
+            <p>Listen from any phone, even a basic one. Standard call rates apply.</p>
+            <a class="go" data-dial href="#"></a>
+          </article>
+          <article class="way">
+            <span class="cost">Text · a few KB</span>
+            <h3>WhatsApp</h3>
+            <p>Register, get reminders and the replay link in a chat you already have open.</p>
+            <a class="go" data-wa href="#">Message us on WhatsApp →</a>
+          </article>
+          <article class="way">
+            <span class="cost">Audio replay · ~28 MB</span>
+            <h3>Later</h3>
+            <p>Can't make it live? Take the audio-only replay and transcript, chaptered by segment.</p>
+            <a class="go" href="replay.html">How the replay works →</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="band" aria-labelledby="h-faq">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Before you pick up</p>
+            <h2 id="h-faq">Questions people ask.</h2>
+          </div>
+        </div>
+        <div class="faq" data-faq></div>
+      </section>
+
+      <section class="band" aria-labelledby="h-redial">
+        <div class="redial">
+          <div>
+            <h2 id="h-redial">Still ringing.</h2>
+            <p><span data-short-when>Thu 12 Nov · 11:00</span> · free · 60 minutes</p>
+          </div>
+          <a class="btn" href="#call">Answer · save my seat</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site">
+      <span>© Telvoip Limited · Nairobi</span>
+      <span class="meter" data-meter>
+        This page used <b class="v">a few KB</b> of your data
+        <span class="gauge" aria-hidden="true"><i></i></span>
+      </span>
+    </footer>
+  </div>
+</body>
+</html>

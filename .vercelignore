@@ -13,3 +13,6 @@ dist
 *.egg-info
 contrib
 CONTRIBUTING.md
+
+# Telvoip webinar pages are a separate static site.
+telvoip-webinar
